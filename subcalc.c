@@ -27,10 +27,6 @@
  * SUCH DAMAGE.
  *
  */
-
-static char const rcsid[] =
-	"$Id: subcalc.c,v 1.11 2003/10/15 23:04:52 modulus Exp $";
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -110,7 +106,7 @@ plen2mask(int n)
 	int     i;
 
 	memset(&ia, 0, sizeof(struct in6_addr));
-	p = (caddr_t)&ia;
+	p = (u_char *)&ia;
 	for (i = 0; i < 16; i++, p++, n -= 8) {
 		if (n >= 8) {
 			*p = 0xff;
@@ -164,20 +160,20 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 		else if (strcmp(a[2], "inet") == 0) {
 			if (&a[3][0] == 0)
 				errx(1, "must specify ip address");
-			packadrinfo(AF_INET, (caddr_t)&stf.a, a[3]);
+			packadrinfo(AF_INET, (u_char *)&stf.a, a[3]);
 		} else if (strcmp(a[2], "inet6") == 0) {
 			if (&a[3][0] == 0)
 				errx(1, "must specify ip6 address or net");
 			sscanf(a[3], "2002:%02x%02x:%02x%02x:",
-				&stf.octet[0], &stf.octet[1],
-				&stf.octet[2], &stf.octet[3]);
+				(unsigned int *)&stf.octet[0], (unsigned int *)&stf.octet[1],
+				(unsigned int *)&stf.octet[2], (unsigned int *)&stf.octet[3]);
 		}
 		printf("6to4 network:        2002:%02x%02x:%02x%02x::/48\n",
 			stf.octet[0], stf.octet[1], stf.octet[2],
 			stf.octet[3]);
 
 		printf("ip version 4 parent: %s\n",
-			getipaddress(AF_INET, (caddr_t)&stf.a));
+			getipaddress(AF_INET, (u_char *)&stf.a));
 
 		exit(0);
 	}
@@ -192,7 +188,7 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 		if (&a[3][0] == NULL)
 			errx(1, "must specify a hostname.");
 
-		packadrinfo(AF_INET6, (caddr_t)&a6, a[2]);
+		packadrinfo(AF_INET6, (u_char *)&a6, a[2]);
 		for (g = 15; g >= 0; g--)
 			printf("%x.%x.%s",
 				(a6.__u6_addr.__u6_addr8[g] & 0x0f),
@@ -211,7 +207,7 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 		if (&a[3][0] == NULL)
 			errx(1, "must specify a hostname.");
 
-		packadrinfo(AF_INET6, (caddr_t)&a6, a[2]);
+		packadrinfo(AF_INET6, (u_char *)&a6, a[2]);
 		for (g = 15; g >= 0; g--)
 			printf("%x.%x.%s",
 				(a6.__u6_addr.__u6_addr8[g] & 0x0f),
@@ -263,7 +259,7 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 			else
 				msk.mask.s_addr = inet_addr(a[4]);
 
-			p->bits = extractbits(AF_INET, (caddr_t)&msk.mask);
+			p->bits = extractbits(AF_INET, (u_char *)&msk.mask);
 		}
 		if (strcmp(a[3], "prefixlen") == 0) {
 			if (c != 5 && !dorange)
@@ -311,8 +307,8 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 		if (strcmp(a[3], "netmask") == 0) {
 			if (c != 5 && !dorange)
 				errx(1,"invalid words near netmask");
-			inet_pton(AF_INET6, a[4], (caddr_t)&msk.mask6);
-			p->bits = extractbits(AF_INET6, (caddr_t)&msk.mask6);
+			inet_pton(AF_INET6, a[4], (u_char *)&msk.mask6);
+			p->bits = extractbits(AF_INET6, (u_char *)&msk.mask6);
 			
 			return(0);
 		}
@@ -333,7 +329,7 @@ getb(u_char *field, unsigned pos)
 	for(i = 0; i < (pos % 8); i++)
 		mask = (mask >> 1);
 
-	return(((mask & field[(int)(pos / 8)]) == mask) ? 1 : 0);
+	return (((mask & field[(int)(pos / 8)]) == mask) ? 1 : 0);
 }
 
 static int
@@ -353,8 +349,8 @@ setb(u_char *field, unsigned pos, char state)
 	return(0);
 }
 
-u_char *
-invert_mask(int af, u_char *addr)
+char *
+invert_mask(int af, void *addr)
 {
 	char buf[128];
 	int i, bit;
@@ -368,14 +364,14 @@ invert_mask(int af, u_char *addr)
 	case PF_INET:
 		adu.in = (struct in_addr *)addr;
 		for (i = IPWIDTH - 1; i >= 0; i--) {
-			bit = getb(&adu.in->s_addr, i);
+			bit = getb((u_char *)&adu.in->s_addr, i);
 			if (bit == 0)
-				setb(&adu.in->s_addr, i, 1);
+				setb((u_char *)&adu.in->s_addr, i, 1);
 			else
-				setb(&adu.in->s_addr, i, 0);
+				setb((u_char *)&adu.in->s_addr, i, 0);
 		}
 		inet_ntop(af, &adu.in->s_addr, &buf[0], INET_ADDRSTRLEN);
-		return (&buf[0]);
+		return (strdup(&buf[0]));
 	}
 	return (NULL);
 }
@@ -392,13 +388,13 @@ unsetmask(int af, u_char *adrspace, unsigned b)
 	if (af == AF_INET6) {
 		adu.in6 = (struct in6_addr *)adrspace;
 		for(i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
-			setb((caddr_t)&adu.in6->__u6_addr, i, 0);
+			setb((u_char *)&adu.in6->__u6_addr, i, 0);
 	}
 
 	if (af == AF_INET) {
 		adu.in = (struct in_addr *)adrspace;
 		for (i = IPWIDTH-1; i >= (IPWIDTH - b); i--)
-			setb((caddr_t)&adu.in->s_addr, i, 0);
+			setb((u_char *)&adu.in->s_addr, i, 0);
 	}
 
 	return(0);
@@ -413,14 +409,14 @@ extractbits(int af, u_char *adrspace)
 	bits = 0;
 	if (af == AF_INET6) {
 		for(i = 0; i < IPV6WIDTH; i++)
-			if (!getb((caddr_t)adrspace, i))
+			if (!getb((u_char *)adrspace, i))
 				bits++;
 		return(IPV6WIDTH - bits);
 	}
 
 	if (af == AF_INET) {
 		for(i = 0; i < IPWIDTH; i++)
-			if (!getb((caddr_t)adrspace, i))
+			if (!getb((u_char *)adrspace, i))
 				bits++;
 		return(IPWIDTH - bits);
 	}
@@ -463,12 +459,12 @@ setmask(int af, u_char *adrspace, unsigned b)
 	if (af == AF_INET6) {
 		adu.in6 = (struct in6_addr *)adrspace;
 		for(i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
-			setb((caddr_t)&adu.in6->__u6_addr, i, 1);
+			setb((u_char *)&adu.in6->__u6_addr, i, 1);
 	}
 	if (af == AF_INET) {
 		adu.in = (struct in_addr *)adrspace;
 		for (i = IPWIDTH-1; i >= (IPWIDTH - b); i--)
-			setb((caddr_t)&adu.in->s_addr, i, 1);
+			setb((u_char *)&adu.in->s_addr, i, 1);
 	}
 
 	return(0);
@@ -521,7 +517,7 @@ main(int argc, char *argv [])
 		u_int destmask;
 
 #define	SETADR6(a)		\
-	packadrinfo(AF_INET6, (caddr_t)&(a), cd.address)
+	packadrinfo(AF_INET6, (u_char *)&(a), cd.address)
 
 		SETADR6(adr6);
 		SETADR6(adr62);
@@ -529,13 +525,13 @@ main(int argc, char *argv [])
 		setaddrmask(&ip6, &ip6mask, cd.bits);
 		
 		b = IPV6WIDTH - cd.bits;
-		unsetmask(AF_INET6, (caddr_t)&adr6, b);
+		unsetmask(AF_INET6, (u_char *)&adr6, b);
 		printf("%srange:       %s > ",
 			(dorange ? "; " : ""),
 			getipaddress(AF_INET6,
-				(caddr_t)&adr6));
-		setmask(AF_INET6, (caddr_t)&adr62, b);
-		printf("%s\n", getipaddress(AF_INET6, (caddr_t)&adr62));
+				(u_char *)&adr6));
+		setmask(AF_INET6, (u_char *)&adr62, b);
+		printf("%s\n", getipaddress(AF_INET6, (u_char *)&adr62));
 
 		p = pow(2, (double)b);
 		printf("%shosts:       %.0f\n",
@@ -553,7 +549,7 @@ main(int argc, char *argv [])
 				int x = 15;
 				if (MASKEQUAL(&adr6, &ip6mask, &ip6))
 					printf("%s\n", getipaddress(AF_INET6, 
-						(caddr_t)&adr6));
+						(u_char *)&adr6));
 				else
 					break;
 				while (x >= 0 && 
@@ -568,18 +564,18 @@ main(int argc, char *argv [])
 		u_int destmask;
 		u_int valmask;
 
-		packadrinfo(AF_INET, (caddr_t)&adr, cd.address);
-		packadrinfo(AF_INET, (caddr_t)&adr2, cd.address);
+		packadrinfo(AF_INET, (u_char *)&adr, cd.address);
+		packadrinfo(AF_INET, (u_char *)&adr2, cd.address);
 
 		x = 1;
 		b = IPWIDTH - cd.bits;
-		unsetmask(AF_INET, (caddr_t)&adr, b);
+		unsetmask(AF_INET, (u_char *)&adr, b);
 
 		printf("%srange:       %s > ",
 			(dorange ? "; " : ""),
-			getipaddress(AF_INET, (caddr_t)&adr));
-		setmask(AF_INET, (caddr_t)&adr2, b);
-		printf("%s\n", getipaddress(AF_INET, (caddr_t)&adr2));
+			getipaddress(AF_INET, (u_char *)&adr));
+		setmask(AF_INET, (u_char *)&adr2, b);
+		printf("%s\n", getipaddress(AF_INET, (u_char *)&adr2));
 
 		printf("%srange b10:   %u > %u\n",
 			(dorange ? "; " : ""), htonl(adr.s_addr),
@@ -597,7 +593,7 @@ main(int argc, char *argv [])
 			(dorange ? "; " : ""), cd.bits);
 		printf("%smask:        %s\n",
 			(dorange ? "; " : ""), getipaddress(AF_INET,
-				(caddr_t)&adr2));
+				(u_char *)&adr2));
 		cmask = invert_mask(AF_INET, &adr2);
 		printf("%scisco mask:  %s\n",
 		    (dorange ? "; " : ""), cmask);
@@ -608,9 +604,9 @@ main(int argc, char *argv [])
 
 			while (valmask != destmask) {
 				int x = 3;
-				u_char *aaa = (caddr_t)&adr;
+				u_char *aaa = (u_char *)&adr;
 				printf("%s\n", getipaddress(AF_INET, 
-					(caddr_t)&adr));
+					(u_char *)&adr));
 				while (x >= 0 && (++aaa[x] & 0xff) == 0)
 					x--;
 				valmask++;

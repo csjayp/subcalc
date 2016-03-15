@@ -4,7 +4,7 @@
 #
 
 PREFIX?=/usr/local
-CFLAGS+=	-pipe -O2 -funroll-loops
+CFLAGS+=	-pipe -O2 -Wall
 OBJS=	subcalc.c
 LIBS=	-lm
 CC?=	CC
@@ -12,7 +12,7 @@ CC?=	CC
 all: subcalc
 
 subcalc:	$(OBJS)
-	$(CC) -o $@ $(OBJS) $(LIBS)
+	$(CC) -o $@ $(OBJS) $(LIBS) $(CFLAGS)
 
 install:
 	cp subcalc $(PREFIX)/bin
