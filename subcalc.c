@@ -33,6 +33,7 @@
 #include <arpa/inet.h>
 
 #include <unistd.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -329,20 +330,23 @@ invert_mask(int af, void *addr)
 	} adu;
 
 	bzero(&buf[0], sizeof(buf));
-	switch (af) {
-	case PF_INET:
-		adu.in = (struct in_addr *)addr;
-		for (i = IPWIDTH - 1; i >= 0; i--) {
-			bit = getb((u_char *)&adu.in->s_addr, i);
-			if (bit == 0)
-				setb((u_char *)&adu.in->s_addr, i, 1);
-			else
-				setb((u_char *)&adu.in->s_addr, i, 0);
-		}
-		inet_ntop(af, &adu.in->s_addr, &buf[0], INET_ADDRSTRLEN);
-		return (strdup(&buf[0]));
+	/*
+	 * NB: This function was created to effectively invert the subnet mask
+	 * to be used with Cisco's ACL specifications.  Last time I looked at
+	 * the Cisco configuration for ACLs they used CIDR and not the
+	 * masking method.
+	 */
+	assert(af == PF_INET);
+	adu.in = (struct in_addr *)addr;
+	for (i = IPWIDTH - 1; i >= 0; i--) {
+		bit = getb((u_char *)&adu.in->s_addr, i);
+		if (bit == 0)
+			setb((u_char *)&adu.in->s_addr, i, 1);
+		else
+			setb((u_char *)&adu.in->s_addr, i, 0);
 	}
-	return (NULL);
+	inet_ntop(af, &adu.in->s_addr, &buf[0], INET_ADDRSTRLEN);
+	return (strdup(&buf[0]));
 }
 
 static int
