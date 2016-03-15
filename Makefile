@@ -1,13 +1,10 @@
 #
 #
-# $Header: /usr/cvs/subcalc/Makefile,v 1.6 2003/08/26 21:29:49 modulus Exp $
-#
-
 PREFIX?=/usr/local
 CFLAGS+=	-pipe -O2 -Wall
 OBJS=	subcalc.c
 LIBS=	-lm
-CC?=	CC
+CC?=	cc
 TARGETS=	subcalc subcalc.1.gz
 
 all: $(TARGETS)
