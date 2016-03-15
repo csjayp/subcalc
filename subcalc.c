@@ -240,9 +240,12 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 					if (++fp >= &fields[2])
 						break;
 			}
+			if (fields[0] == NULL || fields[1] == NULL) {
+				(void) fprintf(stderr, "invalid address/cidr specification\n");
+				exit(1);
+			}
 			memcpy(p->address, fields[0], sizeof(p->address));
 			p->bits = atoi(fields[1]);
-
 			return(0);
 		} else if (c == 3)
 			errx(1, "specify network bits or mask.");
@@ -290,6 +293,10 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 				if (**fp != '\0')
 					if (++fp >= &fields[2])
 						break;
+			}
+			if (fields[0] == NULL || fields[1] == NULL) {
+				(void) fprintf(stderr, "invalid address/cidr specification\n");
+				exit(1);
 			}
 			memcpy(p->address, fields[0], sizeof(p->address));
 			p->bits = atoi(fields[1]);
