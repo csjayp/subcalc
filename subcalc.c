@@ -377,7 +377,7 @@ invert_mask(int af, u_char *addr)
 		inet_ntop(af, &adu.in->s_addr, &buf[0], INET_ADDRSTRLEN);
 		return (&buf[0]);
 	}
-        return (NULL);
+	return (NULL);
 }
 
 static int
