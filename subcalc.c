@@ -132,7 +132,8 @@ static int
 proccmdargs(int c, char *a[], struct cmdargs *p)
 {
 	static char **fp, *fields[10];
-	char *tmp;
+	struct in6_addr a6;
+	char *m, *r, *tmp;
 	int g;
 	union {
 		struct in_addr mask;
@@ -165,8 +166,6 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 	}
 	g = c - 1;
 	if (strcmp(a[1], "int6") == 0) {
-		struct in6_addr a6;
-
 		if (&a[2][0] == NULL)
 			errx(1, "must specify ip6 address.");
 		if (&a[3][0] == NULL)
@@ -181,8 +180,6 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 		exit(0);
 	}
 	if (strcmp(a[1], "arpa6") == 0) {
-		struct in6_addr a6;
-
 		if (&a[2][0] == NULL)
 			errx(1, "must specify ip6 address.");
 		if (&a[3][0] == NULL)
@@ -210,7 +207,7 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 		}
 		if (strchr(a[2], '/')) {
 			tmp = &a[2][0];
-			for(fp = fields; (*fp = strsep(&tmp, "/"))
+			for (fp = fields; (*fp = strsep(&tmp, "/"))
 				!= NULL;) {
 				if (**fp != '\0')
 					if (++fp >= &fields[2])
@@ -222,13 +219,11 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 			}
 			memcpy(p->address, fields[0], sizeof(p->address));
 			p->bits = atoi(fields[1]);
-			return(0);
+			return (0);
 		} else if (c == 3)
 			errx(1, "specify network bits or mask.");
 		memcpy(p->address, a[2], sizeof(p->address));
 		if (strcmp(a[3], "netmask") == 0) {
-			char *m, *r;
-
 			if (c != 5 && !dorange)
 				errx(1,"invalid words near netmask");
 			m = &a[4][0];
@@ -382,7 +377,7 @@ extractbits(int af, u_char *adrspace)
 		for(i = 0; i < IPV6WIDTH; i++)
 			if (!getb((u_char *)adrspace, i))
 				bits++;
-		return(IPV6WIDTH - bits);
+		return (IPV6WIDTH - bits);
 	}
 	if (af == AF_INET) {
 		for(i = 0; i < IPWIDTH; i++)
@@ -425,7 +420,7 @@ setmask(int af, u_char *adrspace, unsigned b)
 
 	if (af == AF_INET6) {
 		adu.in6 = (struct in6_addr *)adrspace;
-		for(i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
+		for (i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
 			setb((u_char *)&adu.in6->__u6_addr, i, 1);
 	}
 	if (af == AF_INET) {
@@ -466,11 +461,11 @@ int
 main(int argc, char *argv [])
 {
 	struct in6_addr adr6, adr62, ip6, ip6mask;
+	u_int x, destmask, valmask;
 	struct in_addr adr, adr2;
 	char buf[64], *cmask;
 	struct cmdargs cd;
 	double p;
-	u_int x;
 	int b;
 
 	if (argc == 1)
@@ -519,9 +514,6 @@ main(int argc, char *argv [])
 		}
 	}
 	if (cd.af == AF_INET) {
-		u_int destmask;
-		u_int valmask;
-
 		packadrinfo(AF_INET, (u_char *)&adr, cd.address);
 		packadrinfo(AF_INET, (u_char *)&adr2, cd.address);
 		x = 1;
@@ -553,7 +545,6 @@ main(int argc, char *argv [])
 		if (dorange) {
 			destmask = 1 << b;
 			valmask = 0;
-
 			while (valmask != destmask) {
 				int x = 3;
 				u_char *aaa = (u_char *)&adr;
