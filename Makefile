@@ -8,8 +8,12 @@ CFLAGS+=	-pipe -O2 -Wall
 OBJS=	subcalc.c
 LIBS=	-lm
 CC?=	CC
+TARGETS=	subcalc subcalc.1.gz
 
-all: subcalc
+all: $(TARGETS)
+
+subcalc.1.gz:
+	gzip -k -9 subcalc.1
 
 subcalc:	$(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS) $(CFLAGS)
@@ -23,4 +27,4 @@ deinstall:
 	rm -f $(PREFIX)/bin/subcalc
 
 clean:
-	rm -f subcalc
+	rm -f subcalc subcalc.1.gz
