@@ -1,0 +1,254 @@
+.\" $Header: /usr/cvs/subcalc/subcalc.1,v 1.6 2003/08/24 07:41:01 modulus Exp $
+.Dd August 22, 2003
+.Dt SUBCALC 1
+.Os
+.Sh NAME
+.Nm subcalc
+.Nd Advanced IP/IPv6 subnet calculation and discovery
+.Sh SYNOPSIS
+.Nm 
+.Op Ar address\ family
+.Op Ar address
+.Op Cm print
+.Nm
+.Op Ar address\ family
+.Op Ar address
+.Op Cm netmask
+.Op Ar mask
+.Op Cm print
+.Nm
+.Op Ar address\ family
+.Op Ar address
+.Op Cm prefixlen
+.Op Ar len
+.Op Cm print
+.Nm
+.Op Ar address\ family
+.Op Cm hosts
+.Op Ar number
+.Nm
+.Op Cm int6
+.Op Ar address
+.Op Ar hostname
+.Nm
+.Op Cm arpa6
+.Op Ar address
+.Op Ar hostname
+.Nm
+.Op Cm stf
+.Op Ar address\ family
+.Op Ar address
+.Sh DESCRIPTION
+The
+.Nm
+utility is used for subnet calculation and IPv6 DNS PTR record generation.
+.Nm
+takes command line arguments in a similar format to ifconfig(8) so
+the synopsis should be familiar to the user. Given an address
+family, address and a netmask/prefix length,
+.Nm
+will calculate the number of hosts and address ranges of the
+specific network. Specifying the ``print'' option to to the
+end of the command line will result in every single network
+address for the specified network being printed to stdout.
+.Pp
+.Nm
+was designed for network engineers which setup fine
+grained firewalls, packet filters, access control lists and
+network subdivisions for both IP and IPv6 servers and networks.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Ar address_family
+Specify the
+address family
+which affects interpretation of the remaining parameters.
+Since
+.Nm
+can handle subnet calculations in different protocols
+with different naming schemes, specifying the address family is recommended.
+The address or protocol families currently
+supported are
+.Dq inet
+and 
+.Dq inet6 .
+.It Ar address
+For the
+.Tn DARPA Ns -Internet
+family,
+the address is
+an Internet address expressed in the Internet standard
+.Dq dot notation .
+.Pp
+It is also possible to use the CIDR notation (also known as the
+slash notation) to include the netmask.
+That is, one can specify an address like
+.Li 192.168.0.1/16 .
+.Pp
+For
+.Dq inet6
+family, it is also possible to specify the prefix length using the slash
+notation, like
+.Li ::1/128 .
+See the
+.Cm prefixlen
+parameter below for more information.
+.It Cm arpa6 Ar address
+Generate an ARPA6 PTR record which the popular DNS server ``BIND''
+will understand. In order for the components of the PTR record
+to be complete, a hostname must be specified as well.
+.It Cm hosts Ar number
+Specify the number of nodes or addresses on a network and
+.Nm
+will calculate an appropriate network subdivision and bits. This
+is used for netmask discovery. NOTE: currently
+.Nm
+calculates the subdivision for one network. In some cases
+it may be more efficient to use more then one network subdivision.
+.It Cm int6 Ar address
+Generate an INT6 PTR record which the popular DNS server ``BIND''
+will understand. In order for the components of the PTR record
+to be complete, a hostname must be specified as well. 
+.It Cm netmask Ar mask
+Specify how much of the address to reserve for subdividing
+networks into sub-networks.
+The mask includes the network part of the local address
+and the subnet part, which is taken from the host field of the address.
+The mask can be specified as a single hexadecimal number
+with a leading
+.Ql 0x ,
+or with a dot-notation Internet address.
+The mask contains 1's for the bit positions in the 32-bit address
+which are to be used for the network and subnet parts,
+and 0's for the host part.
+The mask should contain at least the standard network portion,
+and the subnet field should be contiguous with the network
+portion.
+.Pp
+The netmask can also be specified in CIDR notation after the address.
+See the
+.Ar address
+option above for more information.
+.It Cm prefixlen Ar len
+Specify that
+.Ar len
+bits are reserved for subdividing networks into sub-networks.
+The
+.Ar len
+must be an integer, and for syntactical reason it must be between 0 to 128.
+It is almost always 64 under the current IPv6 assignment rule.
+If the parameter is omitted, 64 is used.
+.Pp
+The prefix can also be specified using the slash notation after the address.
+See the
+.Ar address
+option above for more information
+.It Cm print
+causes each address in the specified network to be printed
+to stdout, one address per line.  Regular subnet calculation
+is still performed, however each line of the standard
+calculation output is prefixed by a ``;'' character. This
+makes it easy for standard subnet calculations to be filtered
+out, in the event that network lists need to be generated.
+.It Cm stf
+If the address family is inet, translate the argument as
+an IPv4 address which will be converted into the arbitrary
+IPv6 ``/48'' (6to4 rfc3056) network designation. If the family
+is inet6, translate the argument as an IPv6 network or address
+specification which will be converted into it's arbitrary
+IPv4 parent address.
+.Sh EXAMPLES
+To calculate the network range, number of hosts, prefixlen
+or CIDR and netmask for the 10.0.0.1/24 (255.255.255.0) network.
+.Pp
+.D1 % subcalc inet 10.0.0.1/24
+.Pp
+Anyone of the following will achieve the exact same thing:
+.Pp
+.D1 % subcalc inet 10.0.0.1 netmask 255.255.255.0
+.D1 % subcalc inet 10.0.0.1 netmask 0xffffff00
+.D1 % subcalc inet 10.0.0.1 prefixlen 24
+.Pp
+To generate a list of nodes for the specified network
+one could use anyone of the following methods:
+.Pp
+.D1 % subcalc inet 10.0.0.1/24 print
+.D1 % subcalc inet 10.0.0.1 netmask 255.255.255.0 print
+.D1 % subcalc inet 10.0.0.1 netmask 0xffffff00 print
+.D1 % subcalc inet 10.0.0.1 prefixlen 24 print
+.Pp
+Arbitrarily, the same thing can be done for IPv6. To calculate
+the network range, number of hosts, prefixlen etc for
+the 3ffe:beef:13e1:4c92::cd90/48 network, one could use any
+of the following:
+.Pp
+.D1 % subcalc inet6 3ffe:beef:13e1:4c92::cd90/48
+.D1 % subcalc inet6 3ffe:beef:13e1:4c92::cd90 netmask ffff:ffff:ffff::
+.D1 % subcalc inet6 3ffe:beef:13e1:4c92::cd90 prefixlen 48
+.Pp
+Likewise for printing each node of a network:
+.Pp
+.D1 % subcalc inet6 3ffe:beef:13e1:4c92::cd90/48 print
+.D1 % subcalc inet6 3ffe:beef:13e1:4c92::cd90 prefixlen 48 print
+.Pp
+IP version 4 PTR records (records which map an address to a 
+canonical name) contain a portion which has a reversed
+version of the IP octet prefixing the in-addr.arpa. zone.
+For example, an RFC 1035 PTR record for 10.0.0.1 would look
+like:
+.Pp
+.D1 1.0.0.10.in-addr.arpa. IN PTR canonical.name.org.
+.Pp
+The first section of this PTR record is called the ``owner'':
+.Pp
+.D1 1.0.0.10.in-addr.arpa.
+.Pp
+For IP version 6, rather then reversing each octet, PTR
+records require that each ``nibble'' or 4 bit address
+subdivision be reversed. For example, the owner section
+of a PTR record for the IPv6 address 3ffe:beef:13e1:4c92::cd90 would be:
+.Pp
+.D1 0.9.d.c.0.0.0.0.0.0.0.0.0.0.0.0.2.9.c.4.1.e.3.1.f.e.e.b.e.f.f.3.ip6.arpa.
+.Pp
+Creating PTR record for IP version 6 addresses can be tedious and more prone
+to error.
+.Nm
+has the capability to automatically subdivide the IPv6 address into nibbles
+and reverse them into a PTR record like format. An example on how this
+might be achieved is:
+.Pp
+.D1 % subcalc arpa6 3ffe:beef:13e1:4c92::cd90 canonical.name.org.
+.D1 % subcalc int6 3ffe:beef:13e1:4c92::cd90 canonical.name.org.
+.Pp
+If you wanted to calculate a subdivision for a network given
+the number of nodes or hosts, you could do:
+.Pp
+.D1 % subcalc inet hosts 23
+.Pp
+The next highest network subdivision in this case would be
+a ``/27'' which has 32 hosts. The netmask for this network
+would be: 255.255.255.224.
+.Pp
+Given an IPv4 address, figure out the 6to4 IPv6 ``/48'' network
+associated with it.
+.Pp
+.D1 % subcalc stf inet 204.55.55.1
+.Pp
+Given an IPv6 network or address, figure out what IPv4 address
+represents the parent for the network.
+.Pp
+.D1 % subcalc stf inet6 2002:cc37:3701::/48
+.D1 % subcalc stf inet6 2002:cc37:3701:bc38::4081
+.Pp
+.Sh AUTHOR
+The
+.Nm
+utility and this man page was written by Christian S.J. Peron.
+Send any bugs or patches to (maneo@bsdpro.com).
+.Sh SEE ALSO
+.Xr ifconfig 8 ,
+.Xr inet 4 ,
+.Xr netintro 4 , 
+.Xr netstat 1 ,
+.Xr stf 4
+
