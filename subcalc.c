@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) Christian S.J. Peron (maneo@bsdpro.com) 
+ * Copyright (c) Christian S.J. Peron (csjp@sqrt.ca) 
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
