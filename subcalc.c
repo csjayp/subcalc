@@ -353,6 +353,33 @@ setb(u_char *field, unsigned pos, char state)
 	return(0);
 }
 
+u_char *
+invert_mask(int af, u_char *addr)
+{
+	char buf[128];
+	int i, bit;
+	union {
+		struct in6_addr *in6;
+		struct in_addr *in;
+	} adu;
+
+	bzero(&buf[0], sizeof(buf));
+	switch (af) {
+	case PF_INET:
+		adu.in = (struct in_addr *)addr;
+		for (i = IPWIDTH - 1; i >= 0; i--) {
+			bit = getb(&adu.in->s_addr, i);
+			if (bit == 0)
+				setb(&adu.in->s_addr, i, 1);
+			else
+				setb(&adu.in->s_addr, i, 0);
+		}
+		inet_ntop(af, &adu.in->s_addr, &buf[0], INET_ADDRSTRLEN);
+		return (&buf[0]);
+	}
+        return (NULL);
+}
+
 static int
 unsetmask(int af, u_char *adrspace, unsigned b)
 {
@@ -452,6 +479,7 @@ getipaddress(int af, u_char *adrspace)
 {
 	static char buf[64];
 
+	bzero(&buf[0], sizeof(buf));
 	inet_ntop(af, adrspace, buf, sizeof(buf));
 
 	return(&buf[0]);
@@ -480,7 +508,7 @@ main(int argc, char *argv [])
 	struct in6_addr adr6, adr62, ip6, ip6mask;
 	int b;
 	double p;
-	char buf[64];
+	char buf[64], *cmask;
 	struct cmdargs cd;
 	u_int x;
 
@@ -570,6 +598,9 @@ main(int argc, char *argv [])
 		printf("%smask:        %s\n",
 			(dorange ? "; " : ""), getipaddress(AF_INET,
 				(caddr_t)&adr2));
+		cmask = invert_mask(AF_INET, &adr2);
+		printf("%scisco mask:  %s\n",
+		    (dorange ? "; " : ""), cmask);
 
 		if (dorange) {
 			destmask = 1 << b;
