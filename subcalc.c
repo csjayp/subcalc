@@ -53,10 +53,6 @@ static int usage(void);
 static int packadrinfo(int af, u_char *adrspace, const char *str);
 static char *getipaddress(int af, u_char *adrspace);
 
-struct bitf {
-	unsigned	b:4;
-};
-
 #define s6_addr32 __u6_addr.__u6_addr32
 #define MASKEQUAL(x,y,z) (\
 	(((x)->s6_addr32[0] & (y)->s6_addr32[0]) == (z)->s6_addr32[0]) && \
