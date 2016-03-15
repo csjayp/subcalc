@@ -126,7 +126,7 @@ plen2mask(int n)
 static int
 setaddrmask(struct in6_addr *ip, struct in6_addr *mask, unsigned bits)
 {
-	register int i;
+	int i;
 
 	*mask = *(plen2mask(bits));
 	for(i = 0; i < sizeof(*ip); i++)
@@ -326,7 +326,7 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 static int
 getb(u_char *field, unsigned pos)
 {
-	register int i;
+	int i;
 	u_char mask;
 
 	mask = 0x80;
@@ -340,7 +340,7 @@ static int
 setb(u_char *field, unsigned pos, char state)
 {
 	u_char mask;
-	register int i;
+	int i;
 
 	mask = 0x80;
 	for(i = 0; i < (pos % 8); i++)
@@ -383,7 +383,7 @@ invert_mask(int af, u_char *addr)
 static int
 unsetmask(int af, u_char *adrspace, unsigned b)
 {
-	register int i;
+	int i;
 	union {
 		struct in6_addr *in6;
 		struct in_addr *in;
@@ -408,7 +408,7 @@ static int
 extractbits(int af, u_char *adrspace)
 {
 	unsigned bits;
-	register int i;
+	int i;
 
 	bits = 0;
 	if (af == AF_INET6) {
@@ -454,7 +454,7 @@ packadrinfo(int af, u_char *adrspace, const char *str)
 static int
 setmask(int af, u_char *adrspace, unsigned b)
 {
-	register int i;
+	int i;
 	union {
 		struct in6_addr *in6;
 		struct in_addr *in;
@@ -504,7 +504,7 @@ usage(void)
 int
 main(int argc, char *argv [])
 {
-	volatile struct in_addr adr, adr2;
+	struct in_addr adr, adr2;
 	struct in6_addr adr6, adr62, ip6, ip6mask;
 	int b;
 	double p;
