@@ -1,6 +1,19 @@
-# subcalc
+# subcalc #
 
-## Usage
+## Overview ##
+
+The subcalc utility is used for subnet calculation and IPv6 DNS PTR
+record generation.  subcalc takes command line arguments in a similar
+format to ifconfig(8) so the synopsis should be familiar to the user.
+Given an address family, address and a netmask/prefix length, subcalc
+will calculate the number of hosts and address ranges of the specific
+network. Specifying the ``print'' option to to the end of the command
+line will result in every single network address for the specified net-
+work being printed to stdout.
+
+subcalc was designed for network engineers which setup fine grained firewalls, packet filters, access control lists and network subdivisions for both IP and IPv6 servers and networks.
+
+## Usage ##
 
 	usage: subcalc [family] [address] print
 	       subcalc [family] [address] netmask [mask] print
@@ -10,7 +23,33 @@
 	       subcalc arpa6 [address] [hostname]
 	       subcalc stf [family] [address]
 
-## License
+
+## Examples ##
+
+To calculate the network range, number of hosts, prefixlen or CIDR and netmask for the 10.0.0.1/24 (255.255.255.0) network.
+
+           % subcalc inet 10.0.0.1/24
+
+Anyone of the following will achieve the exact same thing:
+
+           % subcalc inet 10.0.0.1 netmask 255.255.255.0
+           % subcalc inet 10.0.0.1 netmask 0xffffff00
+           % subcalc inet 10.0.0.1 prefixlen 24
+
+To generate a list of nodes for the specified network one could use anyone of the following methods:
+
+           % subcalc inet 10.0.0.1/24 print
+           % subcalc inet 10.0.0.1 netmask 255.255.255.0 print
+           % subcalc inet 10.0.0.1 netmask 0xffffff00 print
+           % subcalc inet 10.0.0.1 prefixlen 24 print
+
+Arbitrarily, the same thing can be done for IPv6. To calculate the network range, number of hosts, prefixlen etc for the 3ffe:beef:13e1:4c92::cd90/48 network, one could use any of the following:
+
+           % subcalc inet6 3ffe:beef:13e1:4c92::cd90/48
+           % subcalc inet6 3ffe:beef:13e1:4c92::cd90 netmask ffff:ffff:ffff::
+           % subcalc inet6 3ffe:beef:13e1:4c92::cd90 prefixlen 48
+
+## License ##
 
 	Copyright (c) Christian S.J. Peron (csjp@sqrt.ca) 
 	All rights reserved.
