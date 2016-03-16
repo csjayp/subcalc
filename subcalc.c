@@ -49,6 +49,7 @@ static int usage(void);
 static int packadrinfo(int af, u_char *adrspace, const char *str);
 static char *getipaddress(int af, u_char *adrspace);
 static int pl2m[9] = { 0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
+static char *invert_mask(int, void *, void *);
 
 static int
 mask_discover(char *number, int af)
@@ -120,6 +121,7 @@ static int
 proccmdargs(int c, char *a[], struct cmdargs *p)
 {
 	static char **fp, *fields[10];
+	struct in_addr tmp_mask;
 	struct in6_addr a6;
 	char *m, *r, *tmp;
 	int g;
@@ -221,6 +223,14 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 				msk.mask.s_addr = inet_addr(a[4]);
 			p->bits = extractbits(AF_INET, (u_char *)&msk.mask);
 		}
+		if (strcmp(a[3], "mask") == 0) {
+			if (c != 5 && !dorange)
+				errx(1,"invalid words near mask");
+			tmp_mask.s_addr = inet_addr(a[4]);
+			(void) invert_mask(AF_INET, &tmp_mask,
+			    &msk.mask.s_addr);
+			p->bits = extractbits(AF_INET, (u_char *)&msk.mask);
+		}
 		if (strcmp(a[3], "prefixlen") == 0) {
 			if (c != 5 && !dorange)
 				errx(1,"invalid words near prefixlen");
@@ -302,8 +312,8 @@ setb(u_char *field, unsigned pos, char state)
 	return (0);
 }
 
-char *
-invert_mask(int af, void *addr)
+static char *
+invert_mask(int af, void *addr, void *conv)
 {
 	char buf[128];
 	int i, bit;
@@ -328,6 +338,8 @@ invert_mask(int af, void *addr)
 		else
 			setb((u_char *)&adu.in->s_addr, i, 0);
 	}
+	if (conv != NULL)
+		(void) bcopy(&adu.in->s_addr, conv, sizeof(adu.in->s_addr));
 	inet_ntop(af, &adu.in->s_addr, &buf[0], INET_ADDRSTRLEN);
 	return (strdup(&buf[0]));
 }
@@ -436,12 +448,13 @@ usage(void)
 	fprintf(stderr,
 		"usage: %s [family] [address] print\n"
 		"       %s [family] [address] netmask [mask] print\n"
+		"       %s [family] [address] mask [cisco mask] print\n"
 		"       %s [family] [address] prefixlen [bits] print\n"
 		"       %s [family] hosts [number]\n"
 		"       %s int6 [address] [hostname]\n"
 		"       %s arpa6 [address] [hostname]\n"
 		"       %s stf [family] [address]\n",
-		prog, prog, prog, prog, prog, prog, prog);
+		prog, prog, prog, prog, prog, prog, prog, prog);
 	exit(1);
 }
 
@@ -515,11 +528,11 @@ main(int argc, char *argv [])
 		    (dorange ? "; " : ""), p);
 		printf("%sprefixlen:   %lu\n",
 		    (dorange ? "; " : ""), cd.bits);
-		printf("%smask:        %s\n",
+		printf("%snetmask:     %s\n",
 		    (dorange ? "; " : ""), getipaddress(AF_INET,
 		    (u_char *)&adr2));
-		cmask = invert_mask(AF_INET, &adr2);
-		printf("%scisco mask:  %s\n",
+		cmask = invert_mask(AF_INET, &adr2, NULL);
+		printf("%smask:        %s\n",
 		    (dorange ? "; " : ""), cmask);
 		if (dorange == 0)
 			return (0);
