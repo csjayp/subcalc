@@ -54,7 +54,14 @@ static int usage(void);
 static int packadrinfo(int af, u_char *adrspace, const char *str);
 static char *getipaddress(int af, u_char *adrspace);
 
+#if defined(__linux__)
+#define s6_addr32 __in6_u.__u6_addr32
+#define s6_addr8 __in6_u.__u6_addr8
+#else /* NB: BSD/OSX may require others */
+#define s6_addr8 __u6_addr.__u6_addr8
 #define s6_addr32 __u6_addr.__u6_addr32
+#endif	/* __linux__ */
+
 #define MASKEQUAL(x,y,z) (\
 	(((x)->s6_addr32[0] & (y)->s6_addr32[0]) == (z)->s6_addr32[0]) && \
 	(((x)->s6_addr32[1] & (y)->s6_addr32[1]) == (z)->s6_addr32[1]) && \
@@ -173,8 +180,8 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 		packadrinfo(AF_INET6, (u_char *)&a6, a[2]);
 		for (g = 15; g >= 0; g--)
 			printf("%x.%x.%s",
-			    (a6.__u6_addr.__u6_addr8[g] & 0x0f),
-			    (a6.__u6_addr.__u6_addr8[g] & 0xf0) >> 4,
+			    (a6.s6_addr8[g] & 0x0f),
+			    (a6.s6_addr8[g] & 0xf0) >> 4,
 			    (g == 0) ? "ip6.int.\tIN\tPTR\t" : "");
 		printf("%s\n", a[3]);
 		exit(0);
@@ -187,8 +194,8 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 		packadrinfo(AF_INET6, (u_char *)&a6, a[2]);
 		for (g = 15; g >= 0; g--)
 			printf("%x.%x.%s",
-			    (a6.__u6_addr.__u6_addr8[g] & 0x0f),
-			    (a6.__u6_addr.__u6_addr8[g] & 0xf0) >> 4,
+			    (a6.s6_addr8[g] & 0x0f),
+			    (a6.s6_addr8[g] & 0xf0) >> 4,
 			    (g == 0) ? "ip6.arpa.\tIN\tPTR\t" : "");
 		printf("%s\n", a[3]);
 		exit(0);
@@ -356,7 +363,7 @@ unsetmask(int af, u_char *adrspace, unsigned b)
 	if (af == AF_INET6) {
 		adu.in6 = (struct in6_addr *)adrspace;
 		for(i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
-			setb((u_char *)&adu.in6->__u6_addr, i, 0);
+			setb((u_char *)&adu.in6->s6_addr8[0], i, 0);
 	}
 	if (af == AF_INET) {
 		adu.in = (struct in_addr *)adrspace;
@@ -421,7 +428,7 @@ setmask(int af, u_char *adrspace, unsigned b)
 	if (af == AF_INET6) {
 		adu.in6 = (struct in6_addr *)adrspace;
 		for (i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
-			setb((u_char *)&adu.in6->__u6_addr, i, 1);
+			setb((u_char *)&adu.in6->s6_addr8[0], i, 1);
 	}
 	if (af == AF_INET) {
 		adu.in = (struct in_addr *)adrspace;
@@ -507,7 +514,7 @@ main(int argc, char *argv [])
 				else
 					break;
 				while (x >= 0 && 
-					(++adr6.__u6_addr.__u6_addr8[x] & 
+					(++adr6.s6_addr8[x] & 
 					0xff) == 0)
 					x--;
 			}

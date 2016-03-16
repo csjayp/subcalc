@@ -10,7 +10,7 @@ TARGETS=	subcalc subcalc.1.gz
 all: $(TARGETS)
 
 subcalc.1.gz:
-	gzip -k -9 subcalc.1
+	gzip -9 -c subcalc.1 > subcalc.1.gz
 
 subcalc:	$(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS) $(CFLAGS)
