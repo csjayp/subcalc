@@ -449,20 +449,18 @@ int
 main(int argc, char *argv [])
 {
 	struct in6_addr adr6, adr62, ip6, ip6mask;
-	u_int x, destmask, valmask;
+	u_int destmask, valmask;
 	struct in_addr adr, adr2;
 	char buf[64], *cmask;
 	struct cmdargs cd;
 	double p;
-	int b;
+	int b, x;
 
 	if (argc == 1)
 		usage();
 	b = 0;
 	proccmdargs(argc, argv, &cd);
 	if (cd.af == AF_INET6) {
-		u_int destmask;
-
 		SETADR6(adr6);
 		SETADR6(adr62);
 		SETADR6(ip6);
@@ -485,7 +483,7 @@ main(int argc, char *argv [])
 		if (dorange) {
 			destmask = 1 << b;
 			for(;;) {
-				int x = 15;
+				x = 15;
 				if (MASKEQUAL(&adr6, &ip6mask, &ip6))
 					printf("%s\n", getipaddress(AF_INET6, 
 					    (u_char *)&adr6));
