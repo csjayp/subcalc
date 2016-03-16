@@ -453,6 +453,7 @@ main(int argc, char *argv [])
 	struct in_addr adr, adr2;
 	char buf[64], *cmask;
 	struct cmdargs cd;
+	u_char *aaa;
 	double p;
 	int b, x;
 
@@ -481,7 +482,6 @@ main(int argc, char *argv [])
 		    sizeof(buf)));
 		if (dorange == 0)
 			return (0);
-		destmask = 1 << b;
 		for(;;) {
 			x = 15;
 			if (MASKEQUAL(&adr6, &ip6mask, &ip6))
@@ -527,10 +527,10 @@ main(int argc, char *argv [])
 		valmask = 0;
 		while (valmask != destmask) {
 			x = 3;
-			u_char *aaa = (u_char *)&adr;
+			aaa = (u_char *)&adr.s_addr;
 			printf("%s\n", getipaddress(AF_INET, 
 				(u_char *)&adr));
-			while (x >= 0 && (++aaa[x] & 0xff) == 0)
+			while (x >= 0 && ((++aaa[x] & 0xff) == 0))
 				x--;
 			valmask++;
 		}
