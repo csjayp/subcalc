@@ -40,12 +40,7 @@
 #include <string.h>
 #include <err.h>
 
-#define	IPV6WIDTH	128
-#define	IPWIDTH		32	
-
-#ifndef LONG_MAX
-#define LONG_MAX 0x7fffffffL
-#endif
+#include "subcalc.h"
 
 static int dorange = 0;
 static char *prog = "subcalc";
@@ -53,21 +48,6 @@ static char *prog = "subcalc";
 static int usage(void);
 static int packadrinfo(int af, u_char *adrspace, const char *str);
 static char *getipaddress(int af, u_char *adrspace);
-
-#if defined(__linux__)
-#define s6_addr32 __in6_u.__u6_addr32
-#define s6_addr8 __in6_u.__u6_addr8
-#else /* NB: BSD/OSX may require others */
-#define s6_addr8 __u6_addr.__u6_addr8
-#define s6_addr32 __u6_addr.__u6_addr32
-#endif	/* __linux__ */
-
-#define MASKEQUAL(x,y,z) (\
-	(((x)->s6_addr32[0] & (y)->s6_addr32[0]) == (z)->s6_addr32[0]) && \
-	(((x)->s6_addr32[1] & (y)->s6_addr32[1]) == (z)->s6_addr32[1]) && \
-	(((x)->s6_addr32[2] & (y)->s6_addr32[2]) == (z)->s6_addr32[2]) && \
-	(((x)->s6_addr32[3] & (y)->s6_addr32[3]) == (z)->s6_addr32[3]))
-
 static int pl2m[9] = { 0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 
 static int
@@ -481,9 +461,6 @@ main(int argc, char *argv [])
 	proccmdargs(argc, argv, &cd);
 	if (cd.af == AF_INET6) {
 		u_int destmask;
-
-#define	SETADR6(a)		\
-	packadrinfo(AF_INET6, (u_char *)&(a), cd.address)
 
 		SETADR6(adr6);
 		SETADR6(adr62);
