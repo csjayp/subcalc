@@ -55,13 +55,14 @@ mask_discover(char *number, int af)
 {
 	double lg, lg2, pwr;
 	u_int i, sp;
-	char *r;
 	int mx;
 
-	sp = strtoul(number, &r, 0);
-	if (*r || r == number || sp > LONG_MAX || !sp)
-		errx(1, "invalid integer specification");
 	sp = atoi(number);
+	if (sp == 0) {
+		(void) fprintf(stderr, "invalid mask specification: %s\n",
+		    number);
+		exit(1);
+	}
 	mx = (af == AF_INET6) ? 128 : 32;
 	for (i = 0; i <= mx; i++) {
 		pwr = pow(2, i);

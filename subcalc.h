@@ -33,10 +33,6 @@
 #define	IPV6WIDTH	128
 #define	IPWIDTH		32	
 
-#ifndef LONG_MAX
-#define LONG_MAX 0x7fffffffL
-#endif
-
 #if defined(__linux__)
 #define s6_addr32 __in6_u.__u6_addr32
 #define s6_addr8 __in6_u.__u6_addr8

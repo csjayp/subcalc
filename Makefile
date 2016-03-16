@@ -1,7 +1,7 @@
 #
 #
 PREFIX?=/usr/local
-CFLAGS+=	-pipe -O2 -Wall
+CFLAGS+=	-pipe -O2 -Wall -g
 OBJS=	subcalc.c
 LIBS=	-lm
 CC?=	cc
