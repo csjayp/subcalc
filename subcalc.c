@@ -432,6 +432,7 @@ getipaddress(int af, u_char *adrspace)
 static int
 usage(void)
 {
+
 	fprintf(stderr,
 		"usage: %s [family] [address] print\n"
 		"       %s [family] [address] netmask [mask] print\n"
@@ -441,7 +442,6 @@ usage(void)
 		"       %s arpa6 [address] [hostname]\n"
 		"       %s stf [family] [address]\n",
 		prog, prog, prog, prog, prog, prog, prog);
-
 	exit(1);
 }
 
@@ -479,20 +479,18 @@ main(int argc, char *argv [])
 		printf("%smask:        %s\n",
 		    (dorange ? "; " : ""), inet_ntop(AF_INET6, &ip6mask, buf,
 		    sizeof(buf)));
-		if (dorange) {
-			destmask = 1 << b;
-			for(;;) {
-				x = 15;
-				if (MASKEQUAL(&adr6, &ip6mask, &ip6))
-					printf("%s\n", getipaddress(AF_INET6, 
-					    (u_char *)&adr6));
-				else
-					break;
-				while (x >= 0 && 
-					(++adr6.s6_addr8[x] & 
-					0xff) == 0)
-					x--;
-			}
+		if (dorange == 0)
+			return (0);
+		destmask = 1 << b;
+		for(;;) {
+			x = 15;
+			if (MASKEQUAL(&adr6, &ip6mask, &ip6))
+				printf("%s\n", getipaddress(AF_INET6, 
+				    (u_char *)&adr6));
+			else
+				break;
+			while (x >= 0 && (++adr6.s6_addr8[x] & 0xff) == 0)
+				x--;
 		}
 	}
 	if (cd.af == AF_INET) {
@@ -523,18 +521,18 @@ main(int argc, char *argv [])
 		cmask = invert_mask(AF_INET, &adr2);
 		printf("%scisco mask:  %s\n",
 		    (dorange ? "; " : ""), cmask);
-		if (dorange) {
-			destmask = 1 << b;
-			valmask = 0;
-			while (valmask != destmask) {
-				x = 3;
-				u_char *aaa = (u_char *)&adr;
-				printf("%s\n", getipaddress(AF_INET, 
-					(u_char *)&adr));
-				while (x >= 0 && (++aaa[x] & 0xff) == 0)
-					x--;
-				valmask++;
-			}
+		if (dorange == 0)
+			return (0);
+		destmask = 1 << b;
+		valmask = 0;
+		while (valmask != destmask) {
+			x = 3;
+			u_char *aaa = (u_char *)&adr;
+			printf("%s\n", getipaddress(AF_INET, 
+				(u_char *)&adr));
+			while (x >= 0 && (++aaa[x] & 0xff) == 0)
+				x--;
+			valmask++;
 		}
 	}
 	return (0);
