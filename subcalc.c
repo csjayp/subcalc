@@ -458,7 +458,6 @@ main(int argc, char *argv [])
 
 	if (argc == 1)
 		usage();
-	b = 0;
 	proccmdargs(argc, argv, &cd);
 	if (cd.af == AF_INET6) {
 		SETADR6(adr6);
@@ -499,7 +498,6 @@ main(int argc, char *argv [])
 	if (cd.af == AF_INET) {
 		packadrinfo(AF_INET, (u_char *)&adr, cd.address);
 		packadrinfo(AF_INET, (u_char *)&adr2, cd.address);
-		x = 1;
 		b = IPWIDTH - cd.bits;
 		unsetmask(AF_INET, (u_char *)&adr, b);
 		printf("%srange:       %s > ",
@@ -529,7 +527,7 @@ main(int argc, char *argv [])
 			destmask = 1 << b;
 			valmask = 0;
 			while (valmask != destmask) {
-				int x = 3;
+				x = 3;
 				u_char *aaa = (u_char *)&adr;
 				printf("%s\n", getipaddress(AF_INET, 
 					(u_char *)&adr));
