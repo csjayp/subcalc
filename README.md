@@ -15,14 +15,11 @@ subcalc was designed for network engineers which setup fine grained firewalls, p
 
 ## Usage ##
 
-	usage: subcalc [family] [address] print
-	       subcalc [family] [address] netmask [mask] print
-	       subcalc [family] [address] prefixlen [bits] print
-	       subcalc [family] hosts [number]
-	       subcalc int6 [address] [hostname]
-	       subcalc arpa6 [address] [hostname]
-	       subcalc stf [family] [address]
-
+	usage:  subcalc [inet | inet6] address [netmask | mask ] mask <print>
+		subcalc [inet | inet6] address [prefixlen] len <print>
+		subcalc [inet | inet6] hosts value
+		subcalc [int6 | arpa6] address hostname
+		subcalc stf [inet | inet6 ] address
 
 ## Examples ##
 
