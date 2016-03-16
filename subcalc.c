@@ -447,10 +447,10 @@ usage(void)
 
 	(void) fprintf(stderr,
 	    "usage: %s [inet | inet6] address [netmask | mask ] mask <print>\n"
-	    "usage: %s [inet | inet6] address [prefixlen] len <print>\n"
-	    "usage: %s [inet | inet6] hosts value\n"
-	    "usage: %s [int6 | arpa6] address hostname\n"
-	    "usage: %s stf [inet | inet6 ] address\n",
+	    "       %s [inet | inet6] address [prefixlen] len <print>\n"
+	    "       %s [inet | inet6] hosts value\n"
+	    "       %s [int6 | arpa6] address hostname\n"
+	    "       %s stf [inet | inet6 ] address\n",
 	    prog, prog, prog, prog, prog);
 	exit(1);
 	/* NOT REACHED */
