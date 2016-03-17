@@ -1,5 +1,7 @@
 # subcalc #
 
+Subnet calculation and discovery utility for BSD & Linux.
+
 ## Overview ##
 
 The subcalc utility is used for subnet calculation and IPv6 DNS PTR
@@ -16,10 +18,10 @@ subcalc was designed for network engineers which setup fine grained firewalls, p
 ## Usage ##
 
 	usage:  subcalc [inet | inet6] address [netmask | mask ] mask <print>
-		subcalc [inet | inet6] address [prefixlen] len <print>
-		subcalc [inet | inet6] hosts value
-		subcalc [int6 | arpa6] address hostname
-		subcalc stf [inet | inet6 ] address
+		    subcalc [inet | inet6] address [prefixlen] len <print>
+		    subcalc [inet | inet6] hosts value
+		    subcalc [int6 | arpa6] address hostname
+		    subcalc stf [inet | inet6 ] address
 
 ## Examples ##
 
