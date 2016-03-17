@@ -1,5 +1,5 @@
 .\" $Header: /usr/cvs/subcalc/subcalc.1,v 1.6 2003/08/24 07:41:01 modulus Exp $
-.Dd August 22, 2003
+.Dd March 17, 2016
 .Dt SUBCALC 1
 .Os
 .Sh NAME
@@ -15,6 +15,12 @@
 .Op Ar address
 .Op Cm netmask
 .Op Ar mask
+.Op Cm print
+.Nm
+.Op Ar address\ family
+.Op Ar address
+.Op Cm mask
+.Op Ar ciscomask
 .Op Cm print
 .Nm
 .Op Ar address\ family
@@ -109,6 +115,12 @@ it may be more efficient to use more then one network subdivision.
 Generate an INT6 PTR record which the popular DNS server ``BIND''
 will understand. In order for the components of the PTR record
 to be complete, a hostname must be specified as well. 
+.It Cm mask Ar ciscomask
+Specify the netmask in the format expected on Cisco routers. That is
+the inverted form of a netmask. For example, the netmask 255.255.255.0
+would be represented as 0.0.0.255. This option is only applicable for
+IPv4, as on Cisco routers, CIDR notation is used to specify network
+addresses.
 .It Cm netmask Ar mask
 Specify how much of the address to reserve for subdividing
 networks into sub-networks.
@@ -168,6 +180,7 @@ Anyone of the following will achieve the exact same thing:
 .D1 % subcalc inet 10.0.0.1 netmask 255.255.255.0
 .D1 % subcalc inet 10.0.0.1 netmask 0xffffff00
 .D1 % subcalc inet 10.0.0.1 prefixlen 24
+.D1 % subcalc inet 10.0.0.1 mask 0.0.0.255
 .Pp
 To generate a list of nodes for the specified network
 one could use anyone of the following methods:
