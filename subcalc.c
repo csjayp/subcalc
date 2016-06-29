@@ -147,7 +147,8 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 			sscanf(a[3], "2002:%02x%02x:%02x%02x:",
 			    (unsigned int *)&stf.octet[0], (unsigned int *)&stf.octet[1],
 			    (unsigned int *)&stf.octet[2], (unsigned int *)&stf.octet[3]);
-		}
+		} else
+			errx(1, "invalid address family: %s", a[2]);
 		printf("6to4 network:        2002:%02x%02x:%02x%02x::/48\n",
 		    stf.octet[0], stf.octet[1], stf.octet[2], stf.octet[3]);
 		printf("ip version 4 parent: %s\n",
