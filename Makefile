@@ -16,7 +16,9 @@ subcalc:	$(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS) $(CFLAGS)
 
 install:
+	[ -d $(PREFIX)/bin ] || mkdir -p $(PREFIX)/bin
 	cp subcalc $(PREFIX)/bin
+	[ -d $(PREFIX)/man/man1/ ] || mkdir -p $(PREFIX)/man/man1/
 	cp subcalc.1.gz $(PREFIX)/man/man1/
 
 deinstall:
