@@ -23,4 +23,4 @@ deinstall:
 	rm -f $(PREFIX)/bin/subcalc
 
 clean:
-	rm -f subcalc
+	rm -rf subcalc subcalc.dSYM

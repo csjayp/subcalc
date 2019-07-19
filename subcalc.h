@@ -33,7 +33,7 @@
 #define	IPV6WIDTH	128
 #define	IPWIDTH		32	
 
-#if defined(__linux__)
+#if defined(linux)
 #define s6_addr32 __in6_u.__u6_addr32
 #define s6_addr8 __in6_u.__u6_addr8
 #else /* NB: BSD/OSX may require others */
