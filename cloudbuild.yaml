@@ -9,8 +9,8 @@ steps:
 
 - name: 'gcr.io/csjp-gcloud/subcalc'
   id: Run build
-  entrypoint: /build.sh
+  entrypoint: /ci/build.sh
 
 - name: 'gcr.io/csjp-gcloud/subcalc'
   id: Test build
-  entrypoint: /test.sh
+  entrypoint: /ci/test.sh
