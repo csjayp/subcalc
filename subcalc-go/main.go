@@ -194,25 +194,47 @@ func setMaskBits(ip net.IP, b int) net.IP {
 	return res
 }
 
-func printRangeIPv6(start net.IP, mask net.IPMask, target net.IP) {
+func rangeIPv6(start net.IP, mask net.IPMask, target net.IP) []string {
+	// NB: we need this to be a stream instead of a complete buffer
+	ret := make([]string, 0)
 	curr := make(net.IP, len(start))
 	copy(curr, start)
 	for {
 		if !matchMasked(curr, mask, target) {
 			break
 		}
-		fmt.Println(curr)
+		ipstr := fmt.Sprintf("%v", curr)
+		ret = append(ret, ipstr)
 		incrementIP(curr)
+	}
+	return ret
+}
+
+func printRangeIPv6(start net.IP, mask net.IPMask, target net.IP) {
+	// NB: stream instead of buffer
+	list := rangeIPv6(start, mask, target)
+	for _, ip := range list {
+		fmt.Printf("%s\n", ip)
 	}
 }
 
-func printRangeIPv4(start net.IP, b int) {
+func rangeIPv4(start net.IP, b int) []string {
 	count := 1 << b
 	curr := make(net.IP, len(start))
+	ret := make([]string, 0)
 	copy(curr, start)
 	for i := 0; i < count; i++ {
-		fmt.Println(curr)
+		ipstr := fmt.Sprintf("%v", curr)
 		incrementIP(curr)
+		ret = append(ret, ipstr)
+	}
+	return ret
+}
+
+func printRangeIPv4(start net.IP, b int) {
+	list := rangeIPv4(start, b)
+	for _, ip := range list {
+		fmt.Printf("%s\n", ip)
 	}
 }
 
