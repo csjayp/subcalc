@@ -34,9 +34,9 @@ type subcalcBlock struct {
 }
 
 type subcalcInput struct {
-	Family  int    `json:"address_family"`
-	Address string `json:"address"`
-	Bits    int    `json:"cidr_bits"`
+	Family  subcalc.AddressFamily `json:"address_family"`
+	Address string                `json:"address"`
+	Bits    int                   `json:"cidr_bits"`
 }
 
 type subcalcResponse struct {
