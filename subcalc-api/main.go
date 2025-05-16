@@ -93,9 +93,10 @@ func handleInet4(input subcalcInput) (subcalcBlock, error) {
 	r2 := binary.BigEndian.Uint32(rangeEnd.To4())
 	maskBytes = subcalc.MakeMask(subcalc.AF_INET, int(input.Bits))
 	netmask := net.IPv4Mask(maskBytes[0], maskBytes[1], maskBytes[2], maskBytes[3])
+	netmask_as_ip := net.IP(netmask).String()
 	_, mask := subcalc.InvertMask(net.IP(netmask))
 	subcalcResp := subcalcBlock{
-		NetMask:      netmask.String(),
+		NetMask:      netmask_as_ip,
 		Mask:         mask,
 		PrefixLength: input.Bits,
 		HostCount:    math.Pow(2, float64(b)),
