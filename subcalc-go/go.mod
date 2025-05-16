@@ -1,3 +1,3 @@
-module subcalc
+module github.com/csjayp/subcalc/subcalc-go
 
 go 1.20
