@@ -10,10 +10,23 @@ const (
 	IPV6WIDTH = 128
 )
 
+type AddressFamily int
+
 const (
-	AF_INET = iota
+	AF_INET AddressFamily = iota
 	AF_INET6
 )
+
+func (w AddressFamily) String() {
+	switch w {
+	case AF_INET:
+		return "inet"
+	case AF_INET6:
+		return "inet6"
+	default:
+		return "invalid"
+	}
+}
 
 func InvertMask(ip net.IP) (net.IPMask, string) {
 	ip4 := ip.To4()
