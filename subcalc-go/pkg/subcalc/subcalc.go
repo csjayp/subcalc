@@ -17,7 +17,7 @@ const (
 	AF_INET6
 )
 
-func (w AddressFamily) String() {
+func (w AddressFamily) String() string {
 	switch w {
 	case AF_INET:
 		return "inet"
@@ -40,7 +40,7 @@ func InvertMask(ip net.IP) (net.IPMask, string) {
 	return inv, net.IP(inv).String()
 }
 
-func MakeMask(af int, bits int) net.IPMask {
+func MakeMask(af AddressFamily, bits int) net.IPMask {
 	mask := make([]byte, 16)
 	for i := 0; i < bits/8; i++ {
 		mask[i] = 0xFF

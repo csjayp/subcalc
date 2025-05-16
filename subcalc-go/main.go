@@ -9,13 +9,13 @@ import (
 	"strconv"
 	"strings"
 
-	"subcalc/pkg/subcalc"
+	"github.com/csjayp/subcalc/subcalc-go/pkg/subcalc"
 )
 
 var dorange int
 
 type cmdargs struct {
-	af   int
+	af   subcalc.AddressFamily
 	addr string
 	bits uint
 }
@@ -103,6 +103,8 @@ func main() {
 }
 
 func proccmdargs(args []string, cd *cmdargs) {
+	var af subcalc.AddressFamily
+
 	if len(args) < 3 {
 		usage()
 	}
@@ -111,7 +113,6 @@ func proccmdargs(args []string, cd *cmdargs) {
 	}
 	afStr := args[1]
 	spec := args[2]
-	var af int
 	if afStr == "inet" {
 		af = subcalc.AF_INET
 	} else if afStr == "inet6" {
