@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/big"
 	"net"
 	"net/url"
 	"strconv"
@@ -27,7 +28,7 @@ type subcalcBlock struct {
 	AddressRange    subcalcRange `json:"address_range"`
 	AddressRangeB10 subcalcRange `json:"address_range_base10"`
 	AddressRangeB16 subcalcRange `json:"address_range_base16"`
-	HostCount       float64      `json:"host_count"`
+	HostCount       string       `json:"host_count"`
 	PrefixLength    int          `json:"prefix_length"`
 	NetMask         string       `json:"network_mask"`
 	Mask            string       `json:"mask"`
@@ -74,6 +75,33 @@ func uriToSubcalcInput(uri string) (subcalcInput, error) {
 	return ret, nil
 }
 
+func handleInet6(input subcalcInput) (subcalcBlock, error) {
+	adr6 := net.ParseIP(input.Address).To16()
+	if adr6 == nil {
+		return subcalcBlock{}, errors.New("invalid ip6 address")
+	}
+	ip6 := make(net.IP, len(adr6))
+	copy(ip6, adr6)
+	ip6mask := subcalc.MakeMask(subcalc.AF_INET6, int(input.Bits))
+	b := subcalc.IPV6WIDTH - int(input.Bits)
+	thePow := big.NewInt(int64(b))
+	hosts := new(big.Int).Exp(big.NewInt(2), thePow, nil)
+	rangeStart := subcalc.ApplyMask(ip6, ip6mask)
+	rangeEnd := subcalc.SetMaskBits(rangeStart, b)
+	_, mask := subcalc.InvertMask(net.IP(ip6mask))
+	subcalcResp := subcalcBlock{
+		AddressRange: subcalcRange{
+			First: rangeStart.String(),
+			Last:  rangeEnd.String(),
+		},
+		PrefixLength: input.Bits,
+		HostCount:    hosts.String(),
+		Mask:         mask,
+		NetMask:      ip6mask.String(),
+	}
+	return subcalcResp, nil
+}
+
 func handleInet4(input subcalcInput) (subcalcBlock, error) {
 	ip := net.ParseIP(input.Address).To4()
 	if ip == nil {
@@ -95,11 +123,12 @@ func handleInet4(input subcalcInput) (subcalcBlock, error) {
 	netmask := net.IPv4Mask(maskBytes[0], maskBytes[1], maskBytes[2], maskBytes[3])
 	netmask_as_ip := net.IP(netmask).String()
 	_, mask := subcalc.InvertMask(net.IP(netmask))
+	hostCountStr := fmt.Sprintf("%.0f", math.Pow(2, float64(b)))
 	subcalcResp := subcalcBlock{
 		NetMask:      netmask_as_ip,
 		Mask:         mask,
 		PrefixLength: input.Bits,
-		HostCount:    math.Pow(2, float64(b)),
+		HostCount:    hostCountStr,
 		AddressRange: subcalcRange{
 			First: rangeStart.String(),
 			Last:  rangeEnd.String(),
@@ -131,8 +160,21 @@ func main() {
 		}
 		resp := subcalcResponse{}
 		switch input.Family {
+		case subcalc.AF_INET6:
+			block, err := handleInet6(input)
+			if err != nil {
+				w.WriteHeader(fsthttp.StatusBadRequest)
+				fmt.Fprintf(w, "%s\r\n", err)
+				return
+			}
+			resp = subcalcResponse{SubcalcAnswer: block, SubcalcQuery: input}
 		case subcalc.AF_INET:
-			block, _ := handleInet4(input)
+			block, err := handleInet4(input)
+			if err != nil {
+				w.WriteHeader(fsthttp.StatusBadRequest)
+				fmt.Fprintf(w, "%s\r\n", err)
+				return
+			}
 			resp = subcalcResponse{SubcalcAnswer: block, SubcalcQuery: input}
 		}
 		respBody, err := json.Marshal(resp)
