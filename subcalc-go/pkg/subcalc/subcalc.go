@@ -29,13 +29,21 @@ func (w AddressFamily) String() string {
 }
 
 func InvertMask(ip net.IP) (net.IPMask, string) {
-	ip4 := ip.To4()
-	if ip4 == nil {
-		panic("invertMask: only IPv4 addresses supported")
+	if ip4 := ip.To4(); ip4 != nil {
+		inv := make(net.IPMask, 4)
+		for i := 0; i < 4; i++ {
+			inv[i] = ^ip4[i]
+		}
+		return inv, net.IP(inv).String()
 	}
-	inv := make(net.IPMask, 4)
-	for i := 0; i < 4; i++ {
-		inv[i] = ^ip4[i]
+
+	ip6 := ip.To16()
+	if ip6 == nil {
+		panic("invertMask: invalid IP address")
+	}
+	inv := make(net.IPMask, 16)
+	for i := 0; i < 16; i++ {
+		inv[i] = ^ip6[i]
 	}
 	return inv, net.IP(inv).String()
 }
