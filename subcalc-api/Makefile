@@ -3,3 +3,6 @@ main.wasm:
 
 clean:
 	rm -fr pkg/* bin/*
+
+run-local:
+	fastly compute serve
