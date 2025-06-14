@@ -75,7 +75,7 @@ csjp@vmxon ~ %
 The following illustraces the same some functionality but with an IP6 address:
 
 ```
-csjp@vmxon ~ % curl -s https://api.sqrt.ca/inet6/2002:dead:beef::1/120| jq .      
+csjp@vmxon ~ % curl -s https://api.sqrt.ca/inet6/2002:dead:beef::1/120 | jq .
 {
   "subcalc_query": {
     "address_family": 1,
