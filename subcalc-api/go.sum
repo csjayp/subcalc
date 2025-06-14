@@ -1,6 +1,4 @@
-github.com/csjayp/subcalc/subcalc-go v0.0.0-20250516201828-ae6b4d696914 h1:TWgUfzEY9b0SDcz2ox8x0iFQIIqlmABi5dpjf3GjFbk=
-github.com/csjayp/subcalc/subcalc-go v0.0.0-20250516201828-ae6b4d696914/go.mod h1:OUGR/O1pPRqSbxt7lyY5AztljlEuG7qAkrhMm2KzOSA=
-github.com/csjayp/subcalc/subcalc-go v0.0.0-20250530040130-b1ab8b9711d1 h1:N6F6rq/zw1aZYYaL9YwXFX1bgoFqgqCnOjxdvuUTjkA=
-github.com/csjayp/subcalc/subcalc-go v0.0.0-20250530040130-b1ab8b9711d1/go.mod h1:OUGR/O1pPRqSbxt7lyY5AztljlEuG7qAkrhMm2KzOSA=
+github.com/csjayp/subcalc/subcalc-go v0.0.0-20250614144219-bc0373e112f9 h1:0AcnBiyAsT3GefDnssxdsBgBxrIkb0U5RltoQBLjEkM=
+github.com/csjayp/subcalc/subcalc-go v0.0.0-20250614144219-bc0373e112f9/go.mod h1:OUGR/O1pPRqSbxt7lyY5AztljlEuG7qAkrhMm2KzOSA=
 github.com/fastly/compute-sdk-go v1.4.2 h1:GhPVB+lGzOidSANwNOE/M4z3uX7p4cjTNcV8xKdZdqs=
 github.com/fastly/compute-sdk-go v1.4.2/go.mod h1:D72sqisfs4IX6ckaitUNBc2daWkayIxO/fIZgFRHLT0=

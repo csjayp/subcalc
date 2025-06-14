@@ -35,9 +35,10 @@ type subcalcBlock struct {
 }
 
 type subcalcInput struct {
-	Family  subcalc.AddressFamily `json:"address_family"`
-	Address string                `json:"address"`
-	Bits    int                   `json:"cidr_bits"`
+	Family    subcalc.AddressFamily `json:"address_family"`
+	Address   string                `json:"address"`
+	Bits      int                   `json:"cidr_bits"`
+	PrintList bool                  `json:"print_list"`
 }
 
 type subcalcResponse struct {
@@ -49,10 +50,13 @@ func uriToSubcalcInput(uri string) (subcalcInput, error) {
 	var err error
 
 	comps := strings.Split(uri, "/")
-	if len(comps) != 4 {
+	if len(comps) < 4 {
 		return subcalcInput{}, errors.New("invalid uri " + uri)
 	}
 	ret := subcalcInput{}
+	if len(comps) == 5 && comps[4] == "print" {
+		ret.PrintList = true
+	}
 	switch strings.ToLower(comps[1]) {
 	case "inet":
 		ret.Family = subcalc.AF_INET
@@ -145,6 +149,23 @@ func handleInet4(input subcalcInput) (subcalcBlock, error) {
 	return subcalcResp, nil
 }
 
+func prepPartOne(data []byte) []byte {
+	where := strings.LastIndex(string(data), "}")
+	if where == -1 {
+		return []byte{}
+	}
+	data[where] = ','
+	work := string(data)
+	work = work + " \"net_list\": ["
+	return []byte(work)
+}
+
+func emitChunkedJSON(data []byte) []byte {
+	resp := prepPartOne(data)
+	ret := fmt.Sprintf("%s", resp)
+	return []byte(ret)
+}
+
 func main() {
 	fsthttp.ServeFunc(func(ctx context.Context, w fsthttp.ResponseWriter, r *fsthttp.Request) {
 		if r.Method == "POST" || r.Method == "PUT" || r.Method == "PATCH" || r.Method == "DELETE" {
@@ -184,7 +205,30 @@ func main() {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		io.Copy(w, io.NopCloser(bytes.NewReader(respBody)))
+		if input.PrintList {
+			var it *subcalc.IPRangeStreamer
+			io.Copy(w, io.NopCloser(bytes.NewReader(emitChunkedJSON(respBody))))
+			startAddr := resp.SubcalcAnswer.AddressRange.First
+			netStart := net.ParseIP(startAddr)
+			switch input.Family {
+			case subcalc.AF_INET:
+				it = subcalc.NewIPRangeStreamer(netStart, input.Bits)
+			case subcalc.AF_INET6:
+				it = subcalc.NewIP6RangeStreamer(netStart, input.Bits)
+			}
+			for chunkID := 0; ; chunkID++ {
+				chunk, ok := it.NextBatch()
+				if !ok {
+					break
+				}
+				part := subcalc.ChunkToPart(chunk, chunkID, it.Finished())
+				block := fmt.Sprintf("%s", part)
+				io.Copy(w, io.NopCloser(bytes.NewReader([]byte(block))))
+			}
+			w.Write([]byte("]}\r\n"))
+		} else {
+			w.Write(respBody)
+		}
 		return
 	})
 }
