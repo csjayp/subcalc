@@ -12,5 +12,9 @@ steps:
   entrypoint: /ci/build.sh
 
 - name: 'gcr.io/csjp-gcloud/subcalc'
+  id: Lint build
+  entrypoint: /ci/lint.sh
+
+- name: 'gcr.io/csjp-gcloud/subcalc'
   id: Test build
   entrypoint: /ci/test.sh
