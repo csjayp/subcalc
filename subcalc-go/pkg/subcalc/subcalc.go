@@ -60,7 +60,7 @@ func NewIP6RangeStreamer(start net.IP, bits int) *IPRangeStreamer {
 	}
 }
 
-func chunkToPart(chunk []string, chunkID int, lastBlock bool) string {
+func ChunkToPart(chunk []string, chunkID int, lastBlock bool) string {
 	respChunk := strings.Join(chunk, ",")
 	if len(chunk) < 32 && chunkID != 0 ||
 		len(chunk) == 32 && !lastBlock {
