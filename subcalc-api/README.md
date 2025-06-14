@@ -1,7 +1,14 @@
 # subcalc API module for Fastly
 
-This service runs on Fastly compute @edge and provides the same services that the `subcalc` command line tools provides. Fllowing are some basic usages. The first example illustrates how retrieve basic subnet calculation information for an IP4 address:
+Build a Fastly compute service which wraps the subcalc golang package bindings.
 
+## Building
+
+This service can be built using `make` or the `fastly compute build` command. If you want to run an instance of this service locally, you can do so through the Fastly Viceroy utility which allows you to run WASM packages on your host. This can be done using `make run-local` or `fastly compute serve`.
+
+## Testing
+
+This service runs on Fastly compute @edge and provides the same services that the `subcalc` command line tools provides. Fllowing are some basic usages. The first example illustrates how retrieve basic subnet calculation information for an IP4 address:
 
 ```
 csjp@vmxon ~ % curl -s https://api.sqrt.ca/inet/10.0.0.1/24 | jq .
