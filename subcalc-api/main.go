@@ -149,7 +149,7 @@ func handleInet4(input subcalcInput) (subcalcBlock, error) {
 	return subcalcResp, nil
 }
 
-func prepPartOne(data []byte) []byte {
+func emitChunkedJSON(data []byte) []byte {
 	where := strings.LastIndex(string(data), "}")
 	if where == -1 {
 		return []byte{}
@@ -158,11 +158,6 @@ func prepPartOne(data []byte) []byte {
 	work := string(data)
 	work = work + "\"net_list\":["
 	return []byte(work)
-}
-
-func emitChunkedJSON(data []byte) []byte {
-	resp := prepPartOne(data)
-	return []byte(resp)
 }
 
 func main() {
