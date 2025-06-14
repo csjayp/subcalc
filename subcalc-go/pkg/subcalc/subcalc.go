@@ -60,7 +60,7 @@ func NewIP6RangeStreamer(start net.IP, bits int) *IPRangeStreamer {
 	}
 }
 
-func chunkToPart(chunk []string, chunkID int, lastBlock bool) string {
+func ChunkToPart(chunk []string, chunkID int, lastBlock bool) string {
 	respChunk := strings.Join(chunk, ",")
 	if len(chunk) < 32 && chunkID != 0 ||
 		len(chunk) == 32 && !lastBlock {
@@ -155,7 +155,6 @@ func SetMaskBits(ip net.IP, b int) net.IP {
 }
 
 func RangeIPv6(start net.IP, mask net.IPMask, target net.IP) []string {
-	// NB: we need this to be a stream instead of a complete buffer
 	ret := make([]string, 0)
 	curr := make(net.IP, len(start))
 	copy(curr, start)
