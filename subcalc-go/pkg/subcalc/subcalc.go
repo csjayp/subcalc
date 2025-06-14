@@ -155,7 +155,6 @@ func SetMaskBits(ip net.IP, b int) net.IP {
 }
 
 func RangeIPv6(start net.IP, mask net.IPMask, target net.IP) []string {
-	// NB: we need this to be a stream instead of a complete buffer
 	ret := make([]string, 0)
 	curr := make(net.IP, len(start))
 	copy(curr, start)
