@@ -222,8 +222,7 @@ func main() {
 					break
 				}
 				part := subcalc.ChunkToPart(chunk, chunkID, it.Finished())
-				block := fmt.Sprintf("%s", part)
-				io.Copy(w, io.NopCloser(bytes.NewReader([]byte(block))))
+				io.Copy(w, io.NopCloser(bytes.NewReader([]byte(part))))
 			}
 			w.Write([]byte("]}\r\n"))
 		} else {
