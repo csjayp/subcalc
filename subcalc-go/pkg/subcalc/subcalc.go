@@ -2,7 +2,9 @@ package subcalc
 
 import (
 	"fmt"
+	"math"
 	"net"
+	"strings"
 )
 
 const (
@@ -26,6 +28,73 @@ func (w AddressFamily) String() string {
 	default:
 		return "invalid"
 	}
+}
+
+type IPRangeStreamer struct {
+	curr  net.IP
+	count float64
+	index float64
+}
+
+func NewIPRangeStreamer(start net.IP, bits int) *IPRangeStreamer {
+	b := IPWIDTH - bits
+	count := 1 << b
+	ipCopy := make(net.IP, len(start))
+	copy(ipCopy, start)
+	return &IPRangeStreamer{
+		curr:  ipCopy,
+		count: float64(count),
+		index: 0,
+	}
+}
+
+func NewIP6RangeStreamer(start net.IP, bits int) *IPRangeStreamer {
+	b := IPV6WIDTH - bits
+	count := math.Pow(2, float64(b))
+	ipCopy := make(net.IP, len(start))
+	copy(ipCopy, start)
+	return &IPRangeStreamer{
+		curr:  ipCopy,
+		count: count,
+		index: 0,
+	}
+}
+
+func chunkToPart(chunk []string, chunkID int, lastBlock bool) string {
+	respChunk := strings.Join(chunk, ",")
+	if len(chunk) < 32 && chunkID != 0 ||
+		len(chunk) == 32 && !lastBlock {
+		respChunk = respChunk + ","
+	}
+	return respChunk
+}
+
+func (it *IPRangeStreamer) Next() (string, bool) {
+	if it.index >= it.count {
+		return "", false
+	}
+	ipStr := it.curr.String()
+	IncrementIP(it.curr)
+	it.index++
+	return ipStr, true
+}
+
+func (it *IPRangeStreamer) Finished() bool {
+	return it.index == it.count
+}
+
+func (it *IPRangeStreamer) NextBatch() ([]string, bool) {
+	if it.index >= it.count {
+		return nil, false
+	}
+	batch := make([]string, 0, 32)
+	for i := 0; i < 32 && it.index < it.count; i++ {
+		ent := "\"" + it.curr.String() + "\""
+		batch = append(batch, ent)
+		IncrementIP(it.curr)
+		it.index++
+	}
+	return batch, true
 }
 
 func InvertMask(ip net.IP) (net.IPMask, string) {
