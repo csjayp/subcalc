@@ -156,7 +156,7 @@ func prepPartOne(data []byte) []byte {
 	}
 	data[where] = ','
 	work := string(data)
-	work = work + " \"net_list\": ["
+	work = work + "\"net_list\":["
 	return []byte(work)
 }
 
