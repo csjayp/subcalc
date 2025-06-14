@@ -2,7 +2,6 @@
 # https://www.fastly.com/documentation/reference/compute/fastly-toml
 
 authors = ["csjayp@gmail.com"]
-cloned_from = "https://github.com/fastly/compute-starter-kit-go-default"
 description = "HTTP API for the subcalc codebase"
 language = "go"
 manifest_version = 3
