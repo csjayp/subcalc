@@ -148,3 +148,40 @@ csjp@vmxon ~ % curl -s https://api.sqrt.ca/inet6/2002:dead:beef::1/127/print | j
 }
 csjp@vmxon ~ % 
 ```
+
+Note that if you do not want to raw HTTP bytes you can also supply a URL encoded version of the query string and the module will properly decode it:
+
+```
+csjp@vmxon subcalc-api % curl -s https://api.sqrt.ca/inet6/2002%3Adead%3Abeef%3A%3A1/127/print  | jq .
+{
+  "subcalc_query": {
+    "address_family": 1,
+    "address": "2002:dead:beef::1",
+    "cidr_bits": 127,
+    "print_list": true
+  },
+  "subcalc_answer": {
+    "address_range": {
+      "first_address": "2002:dead:beef::",
+      "last_address": "2002:dead:beef::1"
+    },
+    "address_range_base10": {
+      "first_address": "",
+      "last_address": ""
+    },
+    "address_range_base16": {
+      "first_address": "",
+      "last_address": ""
+    },
+    "host_count": "2",
+    "prefix_length": 127,
+    "network_mask": "fffffffffffffffffffffffffffffffe",
+    "mask": "::1"
+  },
+  "net_list": [
+    "2002:dead:beef::",
+    "2002:dead:beef::1"
+  ]
+}
+csjp@vmxon subcalc-api % 
+```
