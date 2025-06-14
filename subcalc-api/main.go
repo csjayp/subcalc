@@ -162,21 +162,20 @@ func prepPartOne(data []byte) []byte {
 
 func emitChunkedJSON(data []byte) []byte {
 	resp := prepPartOne(data)
-	ret := fmt.Sprintf("%s", resp)
-	return []byte(ret)
+	return []byte(resp)
 }
 
 func main() {
 	fsthttp.ServeFunc(func(ctx context.Context, w fsthttp.ResponseWriter, r *fsthttp.Request) {
 		if r.Method == "POST" || r.Method == "PUT" || r.Method == "PATCH" || r.Method == "DELETE" {
 			w.WriteHeader(fsthttp.StatusMethodNotAllowed)
-			fmt.Fprintf(w, "This method is not allowed\n")
+			_, _ = fmt.Fprintf(w, "This method is not allowed\n")
 			return
 		}
 		input, err := uriToSubcalcInput(r.URL.Path)
 		if err != nil {
 			w.WriteHeader(fsthttp.StatusNotFound)
-			fmt.Fprintf(w, "%s\r\n", err)
+			_, _ = fmt.Fprintf(w, "%s\r\n", err)
 			return
 		}
 		resp := subcalcResponse{}
@@ -185,7 +184,7 @@ func main() {
 			block, err := handleInet6(input)
 			if err != nil {
 				w.WriteHeader(fsthttp.StatusBadRequest)
-				fmt.Fprintf(w, "%s\r\n", err)
+				_, _ = fmt.Fprintf(w, "%s\r\n", err)
 				return
 			}
 			resp = subcalcResponse{SubcalcAnswer: block, SubcalcQuery: input}
@@ -193,7 +192,7 @@ func main() {
 			block, err := handleInet4(input)
 			if err != nil {
 				w.WriteHeader(fsthttp.StatusBadRequest)
-				fmt.Fprintf(w, "%s\r\n", err)
+				_, _ = fmt.Fprintf(w, "%s\r\n", err)
 				return
 			}
 			resp = subcalcResponse{SubcalcAnswer: block, SubcalcQuery: input}
@@ -201,13 +200,13 @@ func main() {
 		respBody, err := json.Marshal(resp)
 		if err != nil {
 			w.WriteHeader(fsthttp.StatusNotFound)
-			fmt.Fprintf(w, "%s\r\n", err)
+			_, _ = fmt.Fprintf(w, "%s\r\n", err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if input.PrintList {
 			var it *subcalc.IPRangeStreamer
-			io.Copy(w, io.NopCloser(bytes.NewReader(emitChunkedJSON(respBody))))
+			_, _ = io.Copy(w, io.NopCloser(bytes.NewReader(emitChunkedJSON(respBody))))
 			startAddr := resp.SubcalcAnswer.AddressRange.First
 			netStart := net.ParseIP(startAddr)
 			switch input.Family {
@@ -222,13 +221,11 @@ func main() {
 					break
 				}
 				part := subcalc.ChunkToPart(chunk, chunkID, it.Finished())
-				block := fmt.Sprintf("%s", part)
-				io.Copy(w, io.NopCloser(bytes.NewReader([]byte(block))))
+				_, _ = io.Copy(w, io.NopCloser(bytes.NewReader([]byte(part))))
 			}
-			w.Write([]byte("]}\r\n"))
+			_, _ = w.Write([]byte("]}\r\n"))
 		} else {
-			w.Write(respBody)
+			_, _ = w.Write(respBody)
 		}
-		return
 	})
 }

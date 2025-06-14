@@ -20,5 +20,6 @@ RUN curl -LO https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz && \
 
 RUN wget https://github.com/fastly/cli/releases/download/v11.2.0/fastly_11.2.0_linux_amd64.deb
 RUN dpkg -i fastly_11.2.0_linux_amd64.deb
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.1.6
 
 ENTRYPOINT [ "/ci/build.sh" ]

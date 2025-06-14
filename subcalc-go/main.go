@@ -33,7 +33,8 @@ func main() {
 	var cd cmdargs
 	proccmdargs(os.Args, &cd)
 
-	if cd.af == subcalc.AF_INET6 {
+	switch cd.af {
+	case subcalc.AF_INET6:
 		adr6 := net.ParseIP(cd.addr).To16()
 		if adr6 == nil {
 			fmt.Fprintln(os.Stderr, "Invalid IPv6 address")
@@ -59,7 +60,7 @@ func main() {
 		}
 
 		printRangeIPv6(rangeStart, ip6mask, ip6)
-	} else if cd.af == subcalc.AF_INET {
+	case subcalc.AF_INET:
 		ip := net.ParseIP(cd.addr).To4()
 		if ip == nil {
 			fmt.Fprintln(os.Stderr, "Invalid IPv4 address")
@@ -113,11 +114,12 @@ func proccmdargs(args []string, cd *cmdargs) {
 	}
 	afStr := args[1]
 	spec := args[2]
-	if afStr == "inet" {
+	switch afStr {
+	case "inet":
 		af = subcalc.AF_INET
-	} else if afStr == "inet6" {
+	case "inet6":
 		af = subcalc.AF_INET6
-	} else {
+	default:
 		errExit("Invalid address family")
 	}
 	addr, bits := parseCIDR(spec)

@@ -158,10 +158,7 @@ func RangeIPv6(start net.IP, mask net.IPMask, target net.IP) []string {
 	ret := make([]string, 0)
 	curr := make(net.IP, len(start))
 	copy(curr, start)
-	for {
-		if !MatchMasked(curr, mask, target) {
-			break
-		}
+	for MatchMasked(curr, mask, target) {
 		ipstr := fmt.Sprintf("%v", curr)
 		ret = append(ret, ipstr)
 		IncrementIP(curr)

@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+
 env
 echo Building C binary...
 make
