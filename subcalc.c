@@ -135,14 +135,14 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 	} stf;
 
 	if (strcmp(a[1], "stf") == 0) {
-		if (&a[2][0] == NULL)
+		if (a[2] == NULL)
 			errx(1, "must specify an address family");
 		else if (strcmp(a[2], "inet") == 0) {
-			if (&a[3][0] == 0)
+			if (a[3] == NULL)
 				errx(1, "must specify ip address");
 			packadrinfo(AF_INET, (u_char *)&stf.a, a[3]);
 		} else if (strcmp(a[2], "inet6") == 0) {
-			if (&a[3][0] == 0)
+			if (a[3] == NULL)
 				errx(1, "must specify ip6 address or net");
 			sscanf(a[3], "2002:%02x%02x:%02x%02x:",
 			    (unsigned int *)&stf.octet[0], (unsigned int *)&stf.octet[1],
@@ -157,9 +157,9 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 	}
 	g = c - 1;
 	if (strcmp(a[1], "int6") == 0) {
-		if (&a[2][0] == NULL)
+		if (a[2] == NULL)
 			errx(1, "must specify ip6 address.");
-		if (&a[3][0] == NULL)
+		if (a[3] == NULL)
 			errx(1, "must specify a hostname.");
 		packadrinfo(AF_INET6, (u_char *)&a6, a[2]);
 		for (g = 15; g >= 0; g--)
@@ -171,9 +171,9 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 		exit(0);
 	}
 	if (strcmp(a[1], "arpa6") == 0) {
-		if (&a[2][0] == NULL)
+		if (a[2] == NULL)
 			errx(1, "must specify ip6 address.");
-		if (&a[3][0] == NULL)
+		if (a[3] == NULL)
 			errx(1, "must specify a hostname.");
 		packadrinfo(AF_INET6, (u_char *)&a6, a[2]);
 		for (g = 15; g >= 0; g--)
@@ -191,7 +191,7 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 			usage();
 		p->af = AF_INET;
 		if (strcmp(a[2], "hosts") == 0) {
-			if (&a[3][0] == NULL)
+			if (a[3] == NULL)
 				usage();
 			mask_discover(a[3], AF_INET);
 			exit(0);
@@ -218,7 +218,7 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 			if (c != 5 && !dorange)
 				errx(1,"invalid words near netmask");
 			m = &a[4][0];
-			if (*m == '0' && *m + 1 == 'x')
+			if (*m == '0' && m[1] == 'x')
 				msk.mask.s_addr = strtoul(m, &r, 16);
 			else
 				msk.mask.s_addr = inet_addr(a[4]);
@@ -245,7 +245,7 @@ proccmdargs(int c, char *a[], struct cmdargs *p)
 			usage();
 		p->af = AF_INET6;
 		if (strcmp(a[2], "hosts") == 0) {
-			if (&a[3][0] == NULL)
+			if (a[3] == NULL)
 				usage();
 			mask_discover(a[3], AF_INET6);
 			exit(0);
@@ -356,12 +356,12 @@ unsetmask(int af, u_char *adrspace, unsigned b)
 
 	if (af == AF_INET6) {
 		adu.in6 = (struct in6_addr *)adrspace;
-		for(i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
+		for(i = IPV6WIDTH-1; i >= (IPV6WIDTH - (int)b); i--)
 			setb((u_char *)&adu.in6->s6_addr8[0], i, 0);
 	}
 	if (af == AF_INET) {
 		adu.in = (struct in_addr *)adrspace;
-		for (i = IPWIDTH-1; i >= (IPWIDTH - b); i--)
+		for (i = IPWIDTH-1; i >= (IPWIDTH - (int)b); i--)
 			setb((u_char *)&adu.in->s_addr, i, 0);
 	}
 	return (0);
@@ -421,12 +421,12 @@ setmask(int af, u_char *adrspace, unsigned b)
 
 	if (af == AF_INET6) {
 		adu.in6 = (struct in6_addr *)adrspace;
-		for (i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
+		for (i = IPV6WIDTH-1; i >= (IPV6WIDTH - (int)b); i--)
 			setb((u_char *)&adu.in6->s6_addr8[0], i, 1);
 	}
 	if (af == AF_INET) {
 		adu.in = (struct in_addr *)adrspace;
-		for (i = IPWIDTH-1; i >= (IPWIDTH - b); i--)
+		for (i = IPWIDTH-1; i >= (IPWIDTH - (int)b); i--)
 			setb((u_char *)&adu.in->s_addr, i, 1);
 	}
 	return (0);
@@ -533,9 +533,10 @@ main(int argc, char *argv [])
 		cmask = invert_mask(AF_INET, &adr2, NULL);
 		printf("%smask:        %s\n",
 		    (dorange ? "; " : ""), cmask);
+		free(cmask);
 		if (dorange == 0)
 			return (0);
-		destmask = 1 << b;
+		destmask = (b < 32) ? (1u << b) : 0;
 		valmask = 0;
 		while (valmask != destmask) {
 			x = 3;
