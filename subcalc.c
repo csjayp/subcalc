@@ -356,12 +356,12 @@ unsetmask(int af, u_char *adrspace, unsigned b)
 
 	if (af == AF_INET6) {
 		adu.in6 = (struct in6_addr *)adrspace;
-		for(i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
+		for(i = IPV6WIDTH-1; i >= (IPV6WIDTH - (int)b); i--)
 			setb((u_char *)&adu.in6->s6_addr8[0], i, 0);
 	}
 	if (af == AF_INET) {
 		adu.in = (struct in_addr *)adrspace;
-		for (i = IPWIDTH-1; i >= (IPWIDTH - b); i--)
+		for (i = IPWIDTH-1; i >= (IPWIDTH - (int)b); i--)
 			setb((u_char *)&adu.in->s_addr, i, 0);
 	}
 	return (0);
@@ -421,12 +421,12 @@ setmask(int af, u_char *adrspace, unsigned b)
 
 	if (af == AF_INET6) {
 		adu.in6 = (struct in6_addr *)adrspace;
-		for (i = IPV6WIDTH-1; i >= (IPV6WIDTH - b); i--)
+		for (i = IPV6WIDTH-1; i >= (IPV6WIDTH - (int)b); i--)
 			setb((u_char *)&adu.in6->s6_addr8[0], i, 1);
 	}
 	if (af == AF_INET) {
 		adu.in = (struct in_addr *)adrspace;
-		for (i = IPWIDTH-1; i >= (IPWIDTH - b); i--)
+		for (i = IPWIDTH-1; i >= (IPWIDTH - (int)b); i--)
 			setb((u_char *)&adu.in->s_addr, i, 1);
 	}
 	return (0);
