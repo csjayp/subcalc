@@ -73,7 +73,7 @@ func uriToSubcalcInput(uri string) (subcalcInput, error) {
 	if err != nil {
 		return ret, err
 	}
-	if ret.Bits > 128 || ret.Bits < 1 {
+	if ret.Bits > 128 || ret.Bits < 0 {
 		return ret, errors.New("invalid CIDR specification")
 	}
 	return ret, nil

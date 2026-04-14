@@ -38,12 +38,12 @@ type IPRangeStreamer struct {
 
 func NewIPRangeStreamer(start net.IP, bits int) *IPRangeStreamer {
 	b := IPWIDTH - bits
-	count := 1 << b
+	count := math.Pow(2, float64(b))
 	ipCopy := make(net.IP, len(start))
 	copy(ipCopy, start)
 	return &IPRangeStreamer{
 		curr:  ipCopy,
-		count: float64(count),
+		count: count,
 		index: 0,
 	}
 }
@@ -167,7 +167,7 @@ func RangeIPv6(start net.IP, mask net.IPMask, target net.IP) []string {
 }
 
 func RangeIPv4(start net.IP, b int) []string {
-	count := 1 << b
+	count := int(math.Pow(2, float64(b)))
 	curr := make(net.IP, len(start))
 	ret := make([]string, 0)
 	copy(curr, start)
