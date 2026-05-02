@@ -5,3 +5,5 @@ go 1.24.3
 require github.com/fastly/compute-sdk-go v1.6.1
 
 require github.com/csjayp/subcalc/subcalc-go v0.0.0-20250614144219-bc0373e112f9
+
+replace github.com/csjayp/subcalc/subcalc-go => ../subcalc-go
