@@ -76,14 +76,18 @@ func uriToSubcalcInput(uri string) (subcalcInput, error) {
 	if ret.Bits > 128 || ret.Bits < 0 {
 		return ret, errors.New("invalid CIDR specification")
 	}
+	if ret.Family == subcalc.AF_INET && ret.Bits > 32 {
+		return ret, errors.New("invalid CIDR specification for IPv4")
+	}
 	return ret, nil
 }
 
 func handleInet6(input subcalcInput) (subcalcBlock, error) {
-	adr6 := net.ParseIP(input.Address).To16()
-	if adr6 == nil {
+	parsed := net.ParseIP(input.Address)
+	if parsed == nil || parsed.To4() != nil {
 		return subcalcBlock{}, errors.New("invalid ip6 address")
 	}
+	adr6 := parsed.To16()
 	ip6 := make(net.IP, len(adr6))
 	copy(ip6, adr6)
 	ip6mask := subcalc.MakeMask(subcalc.AF_INET6, int(input.Bits))
@@ -154,10 +158,7 @@ func emitChunkedJSON(data []byte) []byte {
 	if where == -1 {
 		return []byte{}
 	}
-	data[where] = ','
-	work := string(data)
-	work = work + "\"net_list\":["
-	return []byte(work)
+	return []byte(string(data[:where]) + ",\"net_list\":[")
 }
 
 func main() {
@@ -200,22 +201,24 @@ func main() {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if input.PrintList {
-			var it *subcalc.IPRangeStreamer
 			_, _ = io.Copy(w, io.NopCloser(bytes.NewReader(emitChunkedJSON(respBody))))
 			startAddr := resp.SubcalcAnswer.AddressRange.First
 			netStart := net.ParseIP(startAddr)
+			var it *subcalc.IPRangeStreamer
 			switch input.Family {
 			case subcalc.AF_INET:
 				it = subcalc.NewIPRangeStreamer(netStart, input.Bits)
 			case subcalc.AF_INET6:
 				it = subcalc.NewIP6RangeStreamer(netStart, input.Bits)
+			default:
+				return
 			}
-			for chunkID := 0; ; chunkID++ {
+			for {
 				chunk, ok := it.NextBatch()
 				if !ok {
 					break
 				}
-				part := subcalc.ChunkToPart(chunk, chunkID, it.Finished())
+				part := subcalc.ChunkToPart(chunk, it.Finished())
 				_, _ = io.Copy(w, io.NopCloser(bytes.NewReader([]byte(part))))
 			}
 			_, _ = w.Write([]byte("]}\r\n"))
