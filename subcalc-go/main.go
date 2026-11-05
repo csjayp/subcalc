@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 	"math"
 	"net"
 	"os"
@@ -12,157 +13,177 @@ import (
 	"github.com/csjayp/subcalc/subcalc-go/pkg/subcalc"
 )
 
-var dorange int
-
 type cmdargs struct {
-	af   subcalc.AddressFamily
-	addr string
-	bits uint
+	af    subcalc.AddressFamily
+	addr  string
+	bits  uint
+	print bool
 }
 
-func usage() {
-	fmt.Fprintln(os.Stderr, "Usage: subcalc [inet|inet6] address[/prefixlen] [print]")
-	os.Exit(1)
+func writef(out io.Writer, format string, args ...any) error {
+	line := []byte(fmt.Sprintf(format, args...))
+	n, err := out.Write(line)
+	if err != nil {
+		return err
+	}
+	if n < len(line) {
+		return io.ErrShortWrite
+	}
+	return nil
 }
 
 func main() {
-	if len(os.Args) == 1 {
-		usage()
-	}
-
-	var cd cmdargs
-	proccmdargs(os.Args, &cd)
-
-	switch cd.af {
-	case subcalc.AF_INET6:
-		adr6 := net.ParseIP(cd.addr).To16()
-		if adr6 == nil {
-			fmt.Fprintln(os.Stderr, "Invalid IPv6 address")
-			os.Exit(1)
-		}
-
-		ip6 := make(net.IP, len(adr6))
-		copy(ip6, adr6)
-		ip6mask := subcalc.MakeMask(subcalc.AF_INET6, int(cd.bits))
-		b := subcalc.IPV6WIDTH - int(cd.bits)
-
-		rangeStart := subcalc.ApplyMask(ip6, ip6mask)
-		rangeEnd := subcalc.SetMaskBits(rangeStart, b)
-
-		fmt.Printf("%srange:       %s > %s\n", semicolon(), rangeStart, rangeEnd)
-		hosts := math.Pow(2, float64(b))
-		fmt.Printf("%shosts:       %.0f\n", semicolon(), hosts)
-		fmt.Printf("%sprefixlen:   %d\n", semicolon(), cd.bits)
-		fmt.Printf("%smask:        %s\n", semicolon(), ip6mask.String())
-
-		if dorange == 0 {
-			return
-		}
-
-		printRangeIPv6(rangeStart, ip6mask, ip6)
-	case subcalc.AF_INET:
-		ip := net.ParseIP(cd.addr).To4()
-		if ip == nil {
-			fmt.Fprintln(os.Stderr, "Invalid IPv4 address")
-			os.Exit(1)
-		}
-
-		ip1 := make(net.IP, len(ip))
-		ip2 := make(net.IP, len(ip))
-		copy(ip1, ip)
-		copy(ip2, ip)
-
-		b := subcalc.IPWIDTH - int(cd.bits)
-
-		maskBytes := subcalc.MakeMask(subcalc.AF_INET, int(cd.bits))
-		rangeStart := subcalc.ApplyMask(ip1, net.IPv4Mask(maskBytes[0], maskBytes[1], maskBytes[2], maskBytes[3]))
-
-		rangeEnd := subcalc.SetMaskBits(rangeStart, b)
-
-		r1 := binary.BigEndian.Uint32(rangeStart.To4())
-		r2 := binary.BigEndian.Uint32(rangeEnd.To4())
-		fmt.Printf("%srange:       %s > %s\n", semicolon(), rangeStart, rangeEnd)
-		fmt.Printf("%srange b10:   %d > %d\n", semicolon(), r1, r2)
-		fmt.Printf("%srange b16:   0x%x > 0x%x\n", semicolon(), r1, r2)
-
-		p := math.Pow(2, float64(b))
-		fmt.Printf("%shosts:       %.0f\n", semicolon(), p)
-		fmt.Printf("%sprefixlen:   %d\n", semicolon(), cd.bits)
-
-		maskBytes = subcalc.MakeMask(subcalc.AF_INET, int(cd.bits))
-		netmask := net.IPv4Mask(maskBytes[0], maskBytes[1], maskBytes[2], maskBytes[3])
-
-		fmt.Printf("%snetmask:     %s\n", semicolon(), net.IP(netmask).String())
-		_, ms := subcalc.InvertMask(net.IP(netmask))
-		fmt.Printf("%smask:        %s\n", semicolon(), ms)
-
-		if dorange == 0 {
-			return
-		}
-		printRangeIPv4(rangeStart, b)
+	if err := run(os.Args, os.Stdout); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
 
-func proccmdargs(args []string, cd *cmdargs) {
-	var af subcalc.AddressFamily
+func run(args []string, out io.Writer) error {
+	cd, err := parseArgs(args)
+	if err != nil {
+		return err
+	}
+	return execute(cd, out)
+}
 
-	if len(args) < 3 {
-		usage()
+func parseArgs(args []string) (cmdargs, error) {
+	if len(args) < 3 || len(args) > 4 {
+		return cmdargs{}, fmt.Errorf("Usage: subcalc [inet|inet6] address[/prefixlen] [print]")
 	}
-	if args[len(args)-1] == "print" {
-		dorange = 1
-	}
-	afStr := args[1]
-	spec := args[2]
-	switch afStr {
+	var af subcalc.AddressFamily
+	switch args[1] {
 	case "inet":
 		af = subcalc.AF_INET
 	case "inet6":
 		af = subcalc.AF_INET6
 	default:
-		errExit("Invalid address family")
+		return cmdargs{}, fmt.Errorf("Invalid address family")
 	}
-	addr, bits := parseCIDR(spec)
-	cd.af = af
-	cd.addr = addr
-	cd.bits = uint(bits)
+	addr, bits, err := parseCIDR(args[2])
+	if err != nil {
+		return cmdargs{}, err
+	}
+	max := subcalc.IPWIDTH
+	if af == subcalc.AF_INET6 {
+		max = subcalc.IPV6WIDTH
+	}
+	if bits < 0 || bits > max {
+		return cmdargs{}, fmt.Errorf("Invalid prefix length for %s (0-%d)", af, max)
+	}
+	printRange := false
+	if len(args) == 4 {
+		if args[3] != "print" {
+			return cmdargs{}, fmt.Errorf("Invalid optional argument: %s", args[3])
+		}
+		printRange = true
+	}
+	return cmdargs{af: af, addr: addr, bits: uint(bits), print: printRange}, nil
 }
 
-func parseCIDR(s string) (string, int) {
+func execute(cd cmdargs, out io.Writer) error {
+	ip, err := parseAddress(cd.af, cd.addr)
+	if err != nil {
+		return err
+	}
+	sep := ""
+	if cd.print {
+		sep = "; "
+	}
+	switch cd.af {
+	case subcalc.AF_INET6:
+		mask, err := subcalc.MakeMaskChecked(cd.af, int(cd.bits))
+		if err != nil {
+			return err
+		}
+		b := subcalc.IPV6WIDTH - int(cd.bits)
+		start := subcalc.ApplyMask(ip, mask)
+		end := subcalc.SetMaskBits(start, b)
+		if err := writef(out, "%srange:       %s > %s\n", sep, start, end); err != nil {
+			return err
+		}
+		if err := writef(out, "%shosts:       %.0f\n", sep, math.Pow(2, float64(b))); err != nil {
+			return err
+		}
+		if err := writef(out, "%sprefixlen:   %d\n", sep, cd.bits); err != nil {
+			return err
+		}
+		if err := writef(out, "%smask:        %s\n", sep, mask.String()); err != nil {
+			return err
+		}
+		if cd.print {
+			return subcalc.WriteRangeIPv6(out, start, int(cd.bits))
+		}
+	case subcalc.AF_INET:
+		mask, err := subcalc.MakeMaskChecked(cd.af, int(cd.bits))
+		if err != nil {
+			return err
+		}
+		b := subcalc.IPWIDTH - int(cd.bits)
+		start := subcalc.ApplyMask(ip, mask)
+		end := subcalc.SetMaskBits(start, b)
+		r1, r2 := binary.BigEndian.Uint32(start.To4()), binary.BigEndian.Uint32(end.To4())
+		if err := writef(out, "%srange:       %s > %s\n", sep, start, end); err != nil {
+			return err
+		}
+		if err := writef(out, "%srange b10:   %d > %d\n", sep, r1, r2); err != nil {
+			return err
+		}
+		if err := writef(out, "%srange b16:   0x%x > 0x%x\n", sep, r1, r2); err != nil {
+			return err
+		}
+		if err := writef(out, "%shosts:       %.0f\n", sep, math.Pow(2, float64(b))); err != nil {
+			return err
+		}
+		if err := writef(out, "%sprefixlen:   %d\n", sep, cd.bits); err != nil {
+			return err
+		}
+		netmask := net.IPv4Mask(mask[0], mask[1], mask[2], mask[3])
+		if err := writef(out, "%snetmask:     %s\n", sep, net.IP(netmask).String()); err != nil {
+			return err
+		}
+		_, ms := subcalc.InvertMask(net.IP(netmask))
+		if err := writef(out, "%smask:        %s\n", sep, ms); err != nil {
+			return err
+		}
+		if cd.print {
+			return subcalc.WriteRangeIPv4(out, start, b)
+		}
+	}
+	return nil
+}
+
+func parseCIDR(s string) (string, int, error) {
 	parts := strings.Split(s, "/")
-	if len(parts) != 2 {
-		errExit("CIDR format required: address/prefix")
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", 0, fmt.Errorf("CIDR format required: address/prefix")
 	}
 	bits, err := strconv.Atoi(parts[1])
 	if err != nil {
-		errExit("Invalid prefix length")
+		return "", 0, fmt.Errorf("Invalid prefix length")
 	}
-	return parts[0], bits
+	return parts[0], bits, nil
 }
 
-func printRangeIPv6(start net.IP, mask net.IPMask, target net.IP) {
-	// NB: stream instead of buffer
-	list := subcalc.RangeIPv6(start, mask, target)
-	for _, ip := range list {
-		fmt.Printf("%s\n", ip)
+func parseAddress(af subcalc.AddressFamily, addr string) (net.IP, error) {
+	parsed := net.ParseIP(addr)
+	if parsed == nil {
+		return nil, fmt.Errorf("Invalid IP address")
 	}
-}
-
-func printRangeIPv4(start net.IP, b int) {
-	list := subcalc.RangeIPv4(start, b)
-	for _, ip := range list {
-		fmt.Printf("%s\n", ip)
+	switch af {
+	case subcalc.AF_INET:
+		ip := parsed.To4()
+		if ip == nil {
+			return nil, fmt.Errorf("Invalid IPv4 address")
+		}
+		return ip, nil
+	case subcalc.AF_INET6:
+		ip := parsed.To16()
+		if ip == nil || parsed.To4() != nil {
+			return nil, fmt.Errorf("Invalid IPv6 address")
+		}
+		return ip, nil
+	default:
+		return nil, fmt.Errorf("Invalid address family")
 	}
-}
-
-func semicolon() string {
-	if dorange > 0 {
-		return "; "
-	}
-	return ""
-}
-
-func errExit(msg string) {
-	fmt.Fprintln(os.Stderr, msg)
-	os.Exit(1)
 }
