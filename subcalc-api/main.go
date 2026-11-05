@@ -90,7 +90,10 @@ func handleInet6(input subcalcInput) (subcalcBlock, error) {
 	adr6 := parsed.To16()
 	ip6 := make(net.IP, len(adr6))
 	copy(ip6, adr6)
-	ip6mask := subcalc.MakeMask(subcalc.AF_INET6, int(input.Bits))
+	ip6mask, err := subcalc.MakeMaskChecked(subcalc.AF_INET6, input.Bits)
+	if err != nil {
+		return subcalcBlock{}, err
+	}
 	b := subcalc.IPV6WIDTH - int(input.Bits)
 	thePow := big.NewInt(int64(b))
 	hosts := new(big.Int).Exp(big.NewInt(2), thePow, nil)
@@ -120,14 +123,16 @@ func handleInet4(input subcalcInput) (subcalcBlock, error) {
 	copy(ip1, ip)
 	copy(ip2, ip)
 	b := subcalc.IPWIDTH - int(input.Bits)
-	maskBytes := subcalc.MakeMask(subcalc.AF_INET, int(input.Bits))
+	maskBytes, err := subcalc.MakeMaskChecked(subcalc.AF_INET, input.Bits)
+	if err != nil {
+		return subcalcBlock{}, err
+	}
 	rangeStart := subcalc.ApplyMask(
 		ip1,
 		net.IPv4Mask(maskBytes[0], maskBytes[1], maskBytes[2], maskBytes[3]))
 	rangeEnd := subcalc.SetMaskBits(rangeStart, b)
 	r1 := binary.BigEndian.Uint32(rangeStart.To4())
 	r2 := binary.BigEndian.Uint32(rangeEnd.To4())
-	maskBytes = subcalc.MakeMask(subcalc.AF_INET, int(input.Bits))
 	netmask := net.IPv4Mask(maskBytes[0], maskBytes[1], maskBytes[2], maskBytes[3])
 	netmask_as_ip := net.IP(netmask).String()
 	_, mask := subcalc.InvertMask(net.IP(netmask))

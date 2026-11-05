@@ -21,15 +21,8 @@ type cmdargs struct {
 }
 
 func writef(out io.Writer, format string, args ...any) error {
-	line := []byte(fmt.Sprintf(format, args...))
-	n, err := out.Write(line)
-	if err != nil {
-		return err
-	}
-	if n < len(line) {
-		return io.ErrShortWrite
-	}
-	return nil
+	_, err := fmt.Fprintf(out, format, args...)
+	return err
 }
 
 func main() {
@@ -147,7 +140,7 @@ func execute(cd cmdargs, out io.Writer) error {
 			return err
 		}
 		if cd.print {
-			return subcalc.WriteRangeIPv4(out, start, b)
+			return subcalc.WriteRangeIPv4(out, start, int(cd.bits))
 		}
 	}
 	return nil

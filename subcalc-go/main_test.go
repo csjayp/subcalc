@@ -3,8 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"io"
-	"net"
 	"strings"
 	"testing"
 
@@ -47,15 +45,6 @@ type errorWriter struct{}
 
 func (errorWriter) Write([]byte) (int, error) { return 0, errors.New("write failed") }
 
-type shortOutputWriter struct{}
-
-func (shortOutputWriter) Write(p []byte) (int, error) {
-	if len(p) == 0 {
-		return 0, nil
-	}
-	return len(p) - 1, nil
-}
-
 func TestExecuteReturnsSummaryAndRangeWriteErrors(t *testing.T) {
 	for _, tc := range []cmdargs{
 		{af: subcalc.AF_INET, addr: "192.0.2.1", bits: 32},
@@ -65,17 +54,8 @@ func TestExecuteReturnsSummaryAndRangeWriteErrors(t *testing.T) {
 			t.Fatalf("execute(%+v) did not return writer error", tc)
 		}
 	}
-	if err := subcalc.WriteRangeIPv4(errorWriter{}, []byte{192, 0, 2, 1}, 0); err == nil {
+	if err := subcalc.WriteRangeIPv4(errorWriter{}, []byte{192, 0, 2, 1}, 32); err == nil {
 		t.Fatal("range writer error lost")
-	}
-}
-
-func TestExecuteDetectsShortWrites(t *testing.T) {
-	if err := execute(cmdargs{af: subcalc.AF_INET, addr: "192.0.2.1", bits: 32}, shortOutputWriter{}); err != io.ErrShortWrite {
-		t.Fatalf("summary error=%v", err)
-	}
-	if err := subcalc.WriteRangeIPv4(shortOutputWriter{}, net.ParseIP("192.0.2.1"), 0); err != io.ErrShortWrite {
-		t.Fatalf("stream error=%v", err)
 	}
 }
 

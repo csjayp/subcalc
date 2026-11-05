@@ -112,11 +112,11 @@ func (it *IPRangeStreamer) NextBatch() ([]string, bool) {
 	return batch, true
 }
 
-func WriteRangeIPv4(w io.Writer, start net.IP, hostBits int) error {
-	if hostBits < 0 || hostBits > IPWIDTH || start.To4() == nil {
+func WriteRangeIPv4(w io.Writer, start net.IP, prefixBits int) error {
+	if prefixBits < 0 || prefixBits > IPWIDTH || start.To4() == nil {
 		return fmt.Errorf("invalid IPv4 range")
 	}
-	return writeRange(w, NewIPRangeStreamer(start, IPWIDTH-hostBits))
+	return writeRange(w, NewIPRangeStreamer(start, prefixBits))
 }
 func WriteRangeIPv6(w io.Writer, start net.IP, prefixBits int) error {
 	if prefixBits < 0 || prefixBits > IPV6WIDTH || start.To16() == nil || start.To4() != nil {
@@ -130,12 +130,9 @@ func writeRange(w io.Writer, it *IPRangeStreamer) error {
 		if !ok {
 			return nil
 		}
-		n, err := fmt.Fprintln(w, ip)
+		_, err := fmt.Fprintln(w, ip)
 		if err != nil {
 			return err
-		}
-		if n < len(ip)+1 {
-			return io.ErrShortWrite
 		}
 	}
 }

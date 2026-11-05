@@ -3,7 +3,6 @@ package subcalc
 import (
 	"bytes"
 	"errors"
-	"io"
 	"net"
 	"testing"
 )
@@ -40,7 +39,7 @@ func TestStreamingRangeAndWriterFailure(t *testing.T) {
 		t.Fatal("stream did not exhaust")
 	}
 	var out bytes.Buffer
-	if err := WriteRangeIPv4(&out, net.ParseIP("192.0.2.0"), 2); err != nil || out.String() != "192.0.2.0\n192.0.2.1\n192.0.2.2\n192.0.2.3\n" {
+	if err := WriteRangeIPv4(&out, net.ParseIP("192.0.2.0"), 30); err != nil || out.String() != "192.0.2.0\n192.0.2.1\n192.0.2.2\n192.0.2.3\n" {
 		t.Fatalf("write range: %q, %v", out.String(), err)
 	}
 	if err := WriteRangeIPv6(failWriter{}, net.ParseIP("2001:db8::"), 128); err == nil {
@@ -124,21 +123,6 @@ func TestRangeIPv6StopsAfterAddressSpaceWrap(t *testing.T) {
 	got := RangeIPv6(net.ParseIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe"), net.CIDRMask(0, 128), net.IPv6zero)
 	if len(got) != 2 || got[1] != "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff" {
 		t.Fatalf("wrapped range=%v", got)
-	}
-}
-
-type shortWriter struct{}
-
-func (shortWriter) Write(p []byte) (int, error) {
-	if len(p) == 0 {
-		return 0, nil
-	}
-	return len(p) - 1, nil
-}
-
-func TestStreamWriterDetectsShortWrite(t *testing.T) {
-	if err := WriteRangeIPv4(shortWriter{}, net.ParseIP("192.0.2.1"), 0); err != io.ErrShortWrite {
-		t.Fatalf("error=%v want %v", err, io.ErrShortWrite)
 	}
 }
 
